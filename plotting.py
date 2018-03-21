@@ -1,3 +1,12 @@
+'''
+v0.002 20.03.2018: Fikse opp temp.log
+'''
+
+# OPTIONS
+
+kuttdesimaler = False
+drawplot = True
+
 import matplotlib
 print(matplotlib.__version__)
 print(str(matplotlib.__file__))
@@ -15,6 +24,20 @@ import math
 fsL = math.floor(fs/33)
 print("Antatt antall linjer: "+str(fsL))
 # exit(2)
+
+def fikslinje():
+	"""Fikse manglende linjeskift i temp.log"""
+	
+	with open("temp.log") as ff:
+		f = ff.read()
+		
+		s = f.split()
+		print("0: "+str(s[0])+" 1: "+str(s[1]))
+		# TODO: Kode ikke ferdig. Fikser ikke det jeg vil fikse
+		# exit(10)
+		pass
+
+fikslinje()
 
 from datetime import datetime
 d = datetime.now().isoformat()
@@ -171,33 +194,134 @@ def removedecimal():
 	print("Rename succesful? for desimal-kutt")
 	
 	
-removedecimal()
+if kuttdesimaler is True:
+	removedecimal()
+else:
+	print("Beholder desimalene")
 
 # print("exit")
 # exit(9)
+
+if drawplot is False:
+	print("Ikke vise plot, endre i options")
+	exit("no show plot")
 
 matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 
 with open('temp.log') as f:
     lines = f.readlines()
+    # disable x til vi konverterer dato
     # x = [line.split()[0] for line in lines]
     y = [line.split()[1] for line in lines]
 
+# Sette ax for senere, MaxNLocator er ETTER plot, import as figure
+# from matplotlib.pyplot import figure as figure
+from matplotlib.ticker import MaxNLocator as MaxNLocator
+
+
+# Override X from the start
+
+# x = numpy.linspace(0,24,24,endpoint=False)
+# print("Len av generert x: "+str(len(x)))
+# print(x)
+
 # print(y)
 
-plt.grid(True)
-# plt.set_major_locator(ticker.AutoLocator())
-# plt.yticks(numpy.arange(min(y), max(y)+1, 1.0))
+# print(len(x))
+print(len(y))
 
+# Finne egen min og max value av y
+
+s = sorted(y)
+ymin = s[0]
+ymax = s[len(y)-1]
+
+# tymi = type(ymin)
+# tyma = type(ymax)
+
+ymin = float(ymin)
+ymax = float(ymax)
+
+# print("Type av ymin: "+str(type(ymin)))
+# print("Type av ymax: "+str(type(ymax)))
+
+print("ymin: "+str(ymin))
+print("ymax: "+str(ymax))
+
+ymin2 = math.floor(ymin)
+ymax2 = round(ymax)
+
+print("ymin2: "+str(ymin2))
+print("ymax2: "+str(ymax2))
+
+# Sjekk om jeg kan sjekke om disse er satt
+
+plt.grid(True)
+
+npa = numpy.arange(ymin2,ymax2,0.1)
+print("Type av npa: "+str(type(npa)))
+print("Numpy arange: "+str(npa))
+
+linspace = numpy.linspace(ymin2,ymax2,num=ymax2-ymin,endpoint=False,retstep=True,dtype=int)
+print(linspace)
+
+# linspacelist = linspace.tolist()
+# print(linspacelist)
+
+# exit(11)
+
+# Se nærmere på denne - skal ikke ha stepping?
+print("Før vi setter inn npa: "+str(npa))
+print("Før vi setter inn linsace: "+str(linspace))
+
+# plt.yticks(npa)
+
+#plt.set_yticklabels(npa)
+
+# Lage "ticks" for x
+
+# numpy arrange X axis
+npax = numpy.arange(24)
+# Printer 0-23 som forventet
+# print(str(npax))
+
+# Lar xticks være default
+# plt.xticks(npax)
+
+# Vet ikke om denne er noe
+# plt.plot.Axis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+# ax rett før plot
+# Bruke plt for å unnga dobling av grafer
+# ax = plt().gca()
+# ax = figure().gca()
+# kl 12:37 - gir opp ax
+# print(ax)
 
 
 # plt.plot(x)
 plt.plot(y)
+
+
 plt.ylabel('Temperatur')
 plt.title(dagensdatostring)
 
-plt.autoscale(enable=True, axis='y')
+# Gjør ikke mye forskjell, om noe
+# plt.autoscale(enable=True, axis='y')
 
+# Her finner vi ut av vi har 40 ylabels
+locs, labs = plt.yticks()
+print("Locs: "+str(locs))
+print(labs)
+
+# plt.locator_params(axis='y', nbins=auto)
+# plt.locator_params(axis='x', nbins=auto)
+
+
+# Last best hope
+# plt og ikke ax
+# Er det denne som lager to plots?
+# plt.axes.yaxis.set_major_locator(MaxNLocator(integer=True))
 
 plt.show()
