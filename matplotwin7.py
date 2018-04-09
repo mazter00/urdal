@@ -36,6 +36,8 @@ templog2 = r"C:\pyscript\temp2.log"
 fs = os.path.getsize(templog)
 print("Bytes: " + str(fs))
 
+assert (fs > 0),"Vil ha noe å jobbe med"
+
 import math
 
 fsL = math.floor(fs / 33)
@@ -108,7 +110,7 @@ print("Dagens dato er: " + str(dagensdato))
 with open(templog) as fl:
     first_line = fl.readline().strip()
 
-print("Første llinje: " + str(first_line))
+print("Første linje: " + str(first_line))
 
 firstdate = extractdate(first_line)
 
@@ -191,10 +193,13 @@ if dagensdato != firstdate:
             else:
                 print("datostring Ikke funnet - linje " + str(count))
                 log2.write(line)
+    # Kanskje ikke så dumt å lukke filen? Hva med log2?
+    tlf.close()
+    log2.close()
 
     fs2 = os.path.getsize(templog2)
-    if (os.name == nt):
-        os.remplace(temp2log, templog)
+    if (os.name == "nt"):
+        os.replace(templog2, templog)
     else:
         os.rename(templog2, templog)
     print("Rename succesful?")
@@ -217,6 +222,7 @@ def removedecimal():
             print("Print: " + str(txt) + " " + str(t))
             temp2.write(str(txt) + " " + str(t) + "\n")
 
+    temp2.close()
     os.rename(templog2, templog)
     print("Rename succesful? for desimal-kutt")
 
@@ -259,6 +265,8 @@ print(len(y))
 
 # Finne egen min og max value av y
 
+print("Len av y: +str(len(y)))")
+assert (len(y)>0),"Y bør være over null"
 s = sorted(y)
 ymin = s[0]
 ymax = s[len(y) - 1]
