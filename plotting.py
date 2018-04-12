@@ -1,4 +1,5 @@
 '''
+v0.003 12.04.2018: Fikset ymax
 v0.002 20.03.2018: Fikse opp temp.log
 '''
 
@@ -235,7 +236,28 @@ print(len(y))
 
 s = sorted(y)
 ymin = s[0]
-ymax = s[len(y)-1]
+
+# 12.04.2018: Jeg finner "NED" randomt... Lager loop for å unngå.
+
+loopc = 0
+
+# Settings false value
+ymax = "NED"
+
+while (ymax == "NED"):
+	print("[Before] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
+	loopc += 1
+	ymax = s[len(y)-loopc]
+	print("[After] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
+	
+
+print("Loop done. ymax er: "+str(ymax))
+
+if (ymax == "NED"):
+	print(y)
+	print("Feil i ymax!")
+
+print("Ymax: "+str(ymax))
 
 # tymi = type(ymin)
 # tyma = type(ymax)
@@ -324,4 +346,4 @@ print(labs)
 # Er det denne som lager to plots?
 # plt.axes.yaxis.set_major_locator(MaxNLocator(integer=True))
 
-plt.show()
+# plt.show()
