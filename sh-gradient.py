@@ -8,24 +8,26 @@ from random import *
 v0.002 - Lagde funksjoner som retunerer verdi. Ikke ferdig.
 v0.001 - Lagde en while loop som tester Sensehat
 
-''' TODO:
+TODO:
 Lage en funksjon som dekker DISTANSE fra 0.25 til f.eks 0.44
 og så beregne  RGB-verdien
 '''
 
 sense = SenseHat()
 
-sense.set_rotation(180)
+# Hjemme er 180 sense.set_rotation(180)
+# Jobb er 270, tydeligvis
+
+sense.set_rotation(270)
 sense.clear()
 sense.low_light = False
 
+# Eksempel-pixler :D
+sense.set_pixel(0,0,255,0,0)
+sense.set_pixel(1,0,0,255,0)
+sense.set_pixel(2,0,0,0,255)
+
 # Format: sense.set_pixel(0,0,255,255,255)
-
-# Starter med blåfargen
-
-# Blue loop
-bl = 255
-c = 0
 
 print("starter loop")
 
@@ -40,7 +42,7 @@ print("Max range is: "+str(r))
 print("Rangen er fra/til: "+str(min)+" <-> "+str(max))
 
 tall = randint(min,max)
-print(tall)
+print("Current Random Temp: "+str(tall))
 
 if (tall > 0): 
 	scala = abs(min)+tall
@@ -61,20 +63,18 @@ def getR(scala):
 	if (scala > 0.75): return 255
 	
 	v = getvalue(scala,"red")
-	
-	print("Nonexisting code for getR "+str(scala))
-	return False
+	print("V, getB: "+str(v))
+	return v
 	
 def getG(scala):
 	# 0%-25%: Gradvis fra 0 til 255
 	# 25%-75%: 255
-	# 75%-100%: Grdvis fra 255 til 0
+	# 75%-100%: Gradvis fra 255 til 0
 	if (scala > 0.25) and (scala < 0.75): return 255
 	
 	v = getvalue(scala,"green")
-	
-	print("Nonexisting code for getG "+str(scala))
-	return False
+	print("V, getB: "+str(v))
+	return v
 
 def getB(scala):
 	# 0%-25%: 255
@@ -84,41 +84,91 @@ def getB(scala):
 	if (scala > 0.5): return 0
 	
 	v = getvalue(scala,"blue")
+	print("V, getB: "+str(v))
+	return v
+
+def getvalue2(scala,target,mode,color):
 	
-	print("Nonexisting code for getB "+str(scala))
-	return False
+	# print("[GV2] Scala: "+str(scala))
+	print("Target: "+str(target))
+	print("Mode: "+str(mode))
+	print("Color: "+str(color))
+	
+	distanse = abs(scala-target)
+	print("Distanse: "+str(distanse))
+	
+	# Relativ distanse
+	rdist = distanse/0.25
+	
+	print("Relativ distanse: "+str(rdist))
+	# print("Er dette et slags prosentall?")
+	
+	temp = int(255*rdist)
+	if (mode == "stigende"): 
+		print("Mode var stigende, vender om...")
+		temp = (255-temp)
+	else:
+		print("Mode er synkende")
+			
+	if temp <= 47: 
+		# Sørge for at det alltid lyser
+		temp = 48
+	
+	# print(temp)
+	return(temp)
+		
+	# exit("exit 3")
 
 def getvalue(scala,color):
 	if (color == "red"):
 		if (scala > 0.5) and (scala < 0.75):
-			value = 255/(scala/0.25)
-			print(value)
-			exit()
-			
+			# target = 0.25
+			# synkende
+			gv2 = getvalue2(scala,0.75,"stigende",color)
+			print(gv2)
+			return(gv2)
+						
 		return False
 	
 	if (color == "green"):
 		if (scala < 0.25):
-			value = 255/(scala/0.25)
-			print(value)
-			return value
-
+			# target = 0.25
+			# stigende
+			gv2 = getvalue2(scala,0.25,"stigende",color)
+			print(gv2)
+			return(gv2)
+			
 		if (scala > 0.75):
-			value = 255/(scala/0.25)
-			print(value)
-			return value
+			# target = 0.75
+			# synkende
+			gv2 = getvalue2(scala,0.75,"synkende",color)
+			print(gv2)
+			return(gv2)
 			
 		return False
 	
 	if (color == "blue"):
 		if (scala > 0.25) and (scala < 0.5):
-			return False
+			# target = 0.25
+			# synkende
+			gv2 = getvalue2(scala,0.25,"synkende",color)
+			print(gv2)
+			return(gv2)
+
 		return False
 	
 
 getr = getR(scala)
 getg = getG(scala)
 getb = getB(scala)
+
+getrtype = type(getr)
+getgtype = type(getg)
+getbtype = type(getb)
+
+print("getr type: "+str(type(getr)))
+print("getg type: "+str(type(getg)))
+print("getb type: "+str(type(getb)))
 
 print(getr, getg, getb)
 
