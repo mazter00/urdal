@@ -4,6 +4,15 @@ from random import *
 
 # Gjennom testing, så vises ikke RGB-verdier som er 47 og/eller lavere!
 
+'''
+v0.002 - Lagde funksjoner som retunerer verdi. Ikke ferdig.
+v0.001 - Lagde en while loop som tester Sensehat
+
+''' TODO:
+Lage en funksjon som dekker DISTANSE fra 0.25 til f.eks 0.44
+og så beregne  RGB-verdien
+'''
+
 sense = SenseHat()
 
 sense.set_rotation(180)
@@ -43,48 +52,74 @@ scala = scala/r
 print("Scala er: "+str(scalaba)+" av "+str(r))
 print("Scala er: "+str(scala))
 
-exit()
+def getR(scala):
+	# 50%-75%: Gradvis fra 0 til 255
+	# 75%-100%: 255
+	
+	# Rød er 50-100%
+	if (scala < 0.5): return 0
+	if (scala > 0.75): return 255
+	
+	v = getvalue(scala,"red")
+	
+	print("Nonexisting code for getR "+str(scala))
+	return False
+	
+def getG(scala):
+	# 0%-25%: Gradvis fra 0 til 255
+	# 25%-75%: 255
+	# 75%-100%: Grdvis fra 255 til 0
+	if (scala > 0.25) and (scala < 0.75): return 255
+	
+	v = getvalue(scala,"green")
+	
+	print("Nonexisting code for getG "+str(scala))
+	return False
 
-while (bl > 0):
-	row = 0
+def getB(scala):
+	# 0%-25%: 255
+	# 25%-50%: Gradvis fra 255 til 0
 	
-	# c = counter, c2 er current counter
-	c2 = c
-	while (c2 > 7):
-		row += 1
-		c2 -= 8
+	if (scala < 0.25): return 255
+	if (scala > 0.5): return 0
 	
-	if (c2 < 0): c2 = 0
+	v = getvalue(scala,"blue")
 	
-	print("c, c2, row: "+str(c)+" "+str(c2)+" "+str(row))
-	
-	x = c2
-	y = row
-	while (y > 7): y -= 8
-	
-	# print("x,y,bl = "+str(x),str(y),str(bl))
-	
-	liste = [0,bl,0]
+	print("Nonexisting code for getB "+str(scala))
+	return False
 
-	if (bl <= 47): 
-		print("Verdi for lav, break "+str(bl))
-		break
+def getvalue(scala,color):
+	if (color == "red"):
+		if (scala > 0.5) and (scala < 0.75):
+			value = 255/(scala/0.25)
+			print(value)
+			exit()
+			
+		return False
 	
-	# print(type(liste))
-	print(x,y,liste)
-	
-	sense.set_pixel(x,y,liste)
+	if (color == "green"):
+		if (scala < 0.25):
+			value = 255/(scala/0.25)
+			print(value)
+			return value
 
-	getp = sense.get_pixel(x,y)
-	tre = getp[1]
-	if (tre == 0): print("Nullverdi i xy: "+str(x)+" "+str(y)); break
+		if (scala > 0.75):
+			value = 255/(scala/0.25)
+			print(value)
+			return value
+			
+		return False
 	
-	# Oppdaterer variabler på slutten
+	if (color == "blue"):
+		if (scala > 0.25) and (scala < 0.5):
+			return False
+		return False
 	
-	bl -= 1
-	c += 1
-	
-	time.sleep(0.025)
-	# sense.clear()
+
+getr = getR(scala)
+getg = getG(scala)
+getb = getB(scala)
+
+print(getr, getg, getb)
 
 print("done")
