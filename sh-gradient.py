@@ -2,15 +2,13 @@ from sense_hat import SenseHat
 import time
 from random import *
 
-# Gjennom testing, så vises ikke RGB-verdier som er 47 og/eller lavere!
 
 '''
+v0.003 - Fyller nå ut den ferdige fargen.
 v0.002 - Lagde funksjoner som retunerer verdi. Ikke ferdig.
 v0.001 - Lagde en while loop som tester Sensehat
 
 TODO:
-Lage en funksjon som dekker DISTANSE fra 0.25 til f.eks 0.44
-og så beregne  RGB-verdien
 '''
 
 sense = SenseHat()
@@ -29,7 +27,7 @@ sense.set_pixel(2,0,0,0,255)
 
 # Format: sense.set_pixel(0,0,255,255,255)
 
-print("starter loop")
+# print("starter script")
 
 # Random temperatur:
 # Range: -40 -> +30
@@ -63,7 +61,7 @@ def getR(scala):
 	if (scala > 0.75): return 255
 	
 	v = getvalue(scala,"red")
-	print("V, getB: "+str(v))
+	# print("V, getB: "+str(v))
 	return v
 	
 def getG(scala):
@@ -73,7 +71,7 @@ def getG(scala):
 	if (scala > 0.25) and (scala < 0.75): return 255
 	
 	v = getvalue(scala,"green")
-	print("V, getB: "+str(v))
+	# print("V, getB: "+str(v))
 	return v
 
 def getB(scala):
@@ -84,15 +82,16 @@ def getB(scala):
 	if (scala > 0.5): return 0
 	
 	v = getvalue(scala,"blue")
-	print("V, getB: "+str(v))
+	# print("V, getB: "+str(v))
 	return v
 
 def getvalue2(scala,target,mode,color):
 	
 	# print("[GV2] Scala: "+str(scala))
-	print("Target: "+str(target))
-	print("Mode: "+str(mode))
-	print("Color: "+str(color))
+	# Virker som at denne koden virker...
+	# print("Target: "+str(target))
+	# print("Mode: "+str(mode))
+	# print("Color: "+str(color))
 	
 	distanse = abs(scala-target)
 	print("Distanse: "+str(distanse))
@@ -105,10 +104,10 @@ def getvalue2(scala,target,mode,color):
 	
 	temp = int(255*rdist)
 	if (mode == "stigende"): 
-		print("Mode var stigende, vender om...")
+		# print("Mode var stigende, vender om...")
 		temp = (255-temp)
-	else:
-		print("Mode er synkende")
+	# else:
+		# print("Mode er synkende")
 			
 	if temp <= 47: 
 		# Sørge for at det alltid lyser
@@ -125,7 +124,7 @@ def getvalue(scala,color):
 			# target = 0.25
 			# synkende
 			gv2 = getvalue2(scala,0.75,"stigende",color)
-			print(gv2)
+			# print(gv2)
 			return(gv2)
 						
 		return False
@@ -135,14 +134,14 @@ def getvalue(scala,color):
 			# target = 0.25
 			# stigende
 			gv2 = getvalue2(scala,0.25,"stigende",color)
-			print(gv2)
+			# print(gv2)
 			return(gv2)
 			
 		if (scala > 0.75):
 			# target = 0.75
 			# synkende
 			gv2 = getvalue2(scala,0.75,"synkende",color)
-			print(gv2)
+			# print(gv2)
 			return(gv2)
 			
 		return False
@@ -152,7 +151,7 @@ def getvalue(scala,color):
 			# target = 0.25
 			# synkende
 			gv2 = getvalue2(scala,0.25,"synkende",color)
-			print(gv2)
+			# print(gv2)
 			return(gv2)
 
 		return False
@@ -162,14 +161,34 @@ getr = getR(scala)
 getg = getG(scala)
 getb = getB(scala)
 
+# Debug
+# getr = "debug"
+
 getrtype = type(getr)
 getgtype = type(getg)
 getbtype = type(getb)
 
-print("getr type: "+str(type(getr)))
-print("getg type: "+str(type(getg)))
-print("getb type: "+str(type(getb)))
+if ((getrtype is int) and (getgtype is int) and (getbtype is int)):
+	# print("All is int :)")
+	pass
+else:
+		
+	print("getr type: "+str(type(getr)))
+	print("getg type: "+str(type(getg)))
+	print("getb type: "+str(type(getb)))
 
 print(getr, getg, getb)
+
+farge = (getr,getg,getb)
+
+fargelist = []
+# print(type(fargelist))
+
+while len(fargelist) < 64:
+	fargelist.append(farge)
+	
+# print(fargelist)
+
+sense.set_pixels(fargelist)
 
 print("done")
