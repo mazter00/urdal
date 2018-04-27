@@ -5,8 +5,9 @@ v0.002 20.03.2018: Fikse opp temp.log
 
 # OPTIONS
 
+# 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
 kuttdesimaler = False
-drawplot = True
+drawplot = False
 
 import matplotlib
 print(matplotlib.__version__)
@@ -19,6 +20,7 @@ print(numpy.__path__)
 import os
 fs = os.path.getsize("temp.log")
 print("Bytes: "+str(fs))
+if (fs == 0): print("0 bytes, exit"), exit(405)
 
 import math
 
@@ -149,7 +151,7 @@ print("First Date String: "+str(firstdatestring))
 if dagensdato != firstdate:
 	print(str(dagensdato)+" er ulik fra "+str(firstdate))
 	
-	print("Vi må flytte VELDIG mange linjer fra tenp.log til "+str(firstdatefile))
+	print("Vi må flytte VELDIG mange linjer fra temp.log til "+str(firstdatefile))
 	
 	# Åpner destination først
 	dest = open(firstdatefile,'w')
@@ -157,7 +159,7 @@ if dagensdato != firstdate:
 	# Åpner backup templog2.log
 	log2 = open("temp2.log",'w')
 	
-	# tenp log file
+	# temp log file
 	count = 0
 	
 	with open("temp.log") as tlf:
@@ -167,10 +169,11 @@ if dagensdato != firstdate:
 				print("datostring funnet - linje "+str(count))
 				dest.write(line)
 			else:
-				print("Ikke funnet - linje "+str(count))
+				print("Datostring ikke funnet - linje "+str(count))
 				log2.write(line)
 				
 	fs2 = os.path.getsize("temp2.log")
+	# if (fs2 == 0): print("FATAL ERROR, 0 bytes!"), exit(666)
 	os.rename("temp2.log","temp.log")
 	print("Rename succesful?")
 	print("Gikk fra "+str(fs)+" bytes til "+str(fs2)+" bytes!")
@@ -193,6 +196,7 @@ def removedecimal():
 	
 	os.rename("temp2.log","temp.log")
 	print("Rename succesful? for desimal-kutt")
+	exit()
 	
 	
 if kuttdesimaler is True:
@@ -203,22 +207,21 @@ else:
 # print("exit")
 # exit(9)
 
-if drawplot is False:
-	print("Ikke vise plot, endre i options")
-	exit("no show plot")
-
+# Fordi vi heter Raspberry Pi
 matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 
-with open('temp.log') as f:
+with open('temp.log',"r") as f:
     lines = f.readlines()
+    if (lines == 0): print("Ingen linjer i temp.log, exit"), exit(404)
+    
     # disable x til vi konverterer dato
     # x = [line.split()[0] for line in lines]
     y = [line.split()[1] for line in lines]
 
 # Sette ax for senere, MaxNLocator er ETTER plot, import as figure
 # from matplotlib.pyplot import figure as figure
-from matplotlib.ticker import MaxNLocator as MaxNLocator
+# from matplotlib.ticker import MaxNLocator as MaxNLocator
 
 
 # Override X from the start
@@ -230,11 +233,12 @@ from matplotlib.ticker import MaxNLocator as MaxNLocator
 # print(y)
 
 # print(len(x))
-print(len(y))
+print("Len av y: "+str(len(y)))
 
 # Finne egen min og max value av y
 
 s = sorted(y)
+print("s: "+str(s))
 ymin = s[0]
 
 # 12.04.2018: Jeg finner "NED" randomt... Lager loop for å unngå.
@@ -242,20 +246,23 @@ ymin = s[0]
 loopc = 0
 
 # Settings false value
-ymax = "NED"
+ymax = ""
 
-while (ymax == "NED"):
-	print("[Before] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
+while ("." not in ymax):
+	print("[Invalid ymax] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
 	loopc += 1
 	ymax = s[len(y)-loopc]
 	print("[After] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
+
+print("Antall loop for å finne korrekt ymax: "+str(loopc))
+
+print("ymax: "+str(ymax)+" Type: "+str(type(ymax)))
+
 	
 
 print("Loop done. ymax er: "+str(ymax))
-
-if (ymax == "NED"):
-	print(y)
-	print("Feil i ymax!")
+maxtype = type(ymax)
+print("Type er: "+str(maxtype))
 
 print("Ymax: "+str(ymax))
 
@@ -265,8 +272,8 @@ print("Ymax: "+str(ymax))
 ymin = float(ymin)
 ymax = float(ymax)
 
-# print("Type av ymin: "+str(type(ymin)))
-# print("Type av ymax: "+str(type(ymax)))
+print("Type av ymin: "+str(type(ymin)))
+print("Type av ymax: "+str(type(ymax)))
 
 print("ymin: "+str(ymin))
 print("ymax: "+str(ymax))
@@ -286,7 +293,7 @@ print("Type av npa: "+str(type(npa)))
 print("Numpy arange: "+str(npa))
 
 linspace = numpy.linspace(ymin2,ymax2,num=ymax2-ymin,endpoint=False,retstep=True,dtype=int)
-print(linspace)
+print("Linspace: "+str(linspace))
 
 # linspacelist = linspace.tolist()
 # print(linspacelist)
@@ -297,7 +304,10 @@ print(linspace)
 print("Før vi setter inn npa: "+str(npa))
 print("Før vi setter inn linsace: "+str(linspace))
 
-# plt.yticks(npa)
+plt.yticks(npa)
+print("yticks has been set!")
+# plt.ylabel(npa)
+# print("ylabel has been set!")
 
 #plt.set_yticklabels(npa)
 
@@ -323,10 +333,16 @@ npax = numpy.arange(24)
 
 
 # plt.plot(x)
+
+
+print("Dette plottes av y: "+str(y))
+
+# Backup, fra y til npa: plt.plot(npa)
 plt.plot(y)
+# plt.plot(npa)
 
 
-plt.ylabel('Temperatur')
+# plt.ylabel('Temperatur')
 plt.title(dagensdatostring)
 
 # Gjør ikke mye forskjell, om noe
@@ -337,6 +353,9 @@ locs, labs = plt.yticks()
 print("Locs: "+str(locs))
 print(labs)
 
+# Teste om man kan sette lavs til ylabel 27.04.2018
+# plt.ylabel(str(locs))
+
 # plt.locator_params(axis='y', nbins=auto)
 # plt.locator_params(axis='x', nbins=auto)
 
@@ -346,4 +365,7 @@ print(labs)
 # Er det denne som lager to plots?
 # plt.axes.yaxis.set_major_locator(MaxNLocator(integer=True))
 
-# plt.show()
+plt.savefig("temp/urdal/temp.png")
+
+if drawplot is True:
+	plt.show()
