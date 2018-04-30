@@ -7,15 +7,15 @@ v0.002 20.03.2018: Fikse opp temp.log
 
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
 kuttdesimaler = False
-drawplot = False
+drawplot = True
 
 import matplotlib
 print(matplotlib.__version__)
 print(str(matplotlib.__file__))
 
-import numpy
-print(numpy.version.version)
-print(numpy.__path__)
+import numpy as np
+print(np.version.version)
+print(np.__path__)
 
 import os
 fs = os.path.getsize("temp.log")
@@ -25,7 +25,7 @@ if (fs == 0): print("0 bytes, exit"), exit(405)
 import math
 
 fsL = math.floor(fs/33)
-print("Antatt antall linjer: "+str(fsL))
+print("Beregnet Antatt Antall Linjer: "+str(fsL))
 # exit(2)
 
 def fikslinje():
@@ -209,13 +209,14 @@ else:
 
 # Fordi vi heter Raspberry Pi
 matplotlib.use('tkagg')
+
 import matplotlib.pyplot as plt
 
 with open('temp.log',"r") as f:
     lines = f.readlines()
     if (lines == 0): print("Ingen linjer i temp.log, exit"), exit(404)
     
-    # disable x til vi konverterer dato
+    # Lese kun y, x og dato tar vi senere.
     # x = [line.split()[0] for line in lines]
     y = [line.split()[1] for line in lines]
 
@@ -226,9 +227,9 @@ with open('temp.log',"r") as f:
 
 # Override X from the start
 
-# x = numpy.linspace(0,24,24,endpoint=False)
-# print("Len av generert x: "+str(len(x)))
-# print(x)
+x = np.linspace(0,24,24,endpoint=False)
+print("Len av generert x: "+str(len(x)))
+print(x)
 
 # print(y)
 
@@ -255,7 +256,6 @@ while ("." not in ymax):
 	print("[After] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
 
 print("Antall loop for å finne korrekt ymax: "+str(loopc))
-
 print("ymax: "+str(ymax)+" Type: "+str(type(ymax)))
 
 	
@@ -288,61 +288,83 @@ print("ymax2: "+str(ymax2))
 
 plt.grid(True)
 
-npa = numpy.arange(ymin2,ymax2,0.1)
+npa = np.arange(ymin2,ymax2,0.1)
 print("Type av npa: "+str(type(npa)))
 print("Numpy arange: "+str(npa))
 
-linspace = numpy.linspace(ymin2,ymax2,num=ymax2-ymin,endpoint=False,retstep=True,dtype=int)
+linspace = np.linspace(ymin2,ymax2,num=ymax2-ymin,endpoint=False,retstep=True,dtype=int)
 print("Linspace: "+str(linspace))
 
 # linspacelist = linspace.tolist()
 # print(linspacelist)
 
-# exit(11)
-
 # Se nærmere på denne - skal ikke ha stepping?
-print("Før vi setter inn npa: "+str(npa))
-print("Før vi setter inn linsace: "+str(linspace))
+# print("Før vi setter inn npa: "+str(npa))
+# print("Før vi setter inn linsace: "+str(linspace))
 
-plt.yticks(npa)
-print("yticks has been set!")
+# 30.04.2018: Ikke sette yticks og ikke sette ylabels
+
+# 30.04.2018: Settes dette, så settes det tett
+# plt.yticks(npa)
+# print("yticks fra npa has been set!")
+
+# 30.04.2018: Settes i hytt og pine
 # plt.ylabel(npa)
 # print("ylabel has been set!")
 
-#plt.set_yticklabels(npa)
+# Virker ikke: plt.set_yticklabels(npa)
+# Virker heller ikke: plt.yticklabels(npa)
 
 # Lage "ticks" for x
 
 # numpy arrange X axis
-npax = numpy.arange(24)
+npax = np.arange(24)
+
 # Printer 0-23 som forventet
-# print(str(npax))
+print(str(npax))
 
-# Lar xticks være default
 # plt.xticks(npax)
+# plt.xlabels(npax)
 
-# Vet ikke om denne er noe
+# 30.04.2018: Må sikkert importere noe?
+# 30.04.2018> Må draw'e først
+# plt.draw()
 # plt.plot.Axis.set_major_locator(ticker.MaxNLocator(integer=True))
 
 # ax rett før plot
 # Bruke plt for å unnga dobling av grafer
 # ax = plt().gca()
 # ax = figure().gca()
-# kl 12:37 - gir opp ax
 # print(ax)
 
 
 # plt.plot(x)
 
-
 print("Dette plottes av y: "+str(y))
+print("Type av y som plottes: "+str(type(y)))
 
-# Backup, fra y til npa: plt.plot(npa)
-plt.plot(y)
+print("0: "+str(y[0]))
+print("1: "+str(y[1]))
+print("2: "+str(y[2]))
+print("3: "+str(y[3]))
+
+a = -1
+x = len(y)
+while (a < x):
+	print("Type nummer "+str(a)+" "+str(type(y[a])))
+	a = a+1
+else:
+	print("y av a var ikke sant "+str(a))
+	
+new_list = [float(i) for i in y]
+print("Type av ny liste: "+str(type(new_list)))
+print("Len av ny liste: "+str(len(new_list)))
+
+plt.plot(new_list)
 # plt.plot(npa)
 
 
-# plt.ylabel('Temperatur')
+plt.ylabel('Temperatur')
 plt.title(dagensdatostring)
 
 # Gjør ikke mye forskjell, om noe
@@ -353,7 +375,7 @@ locs, labs = plt.yticks()
 print("Locs: "+str(locs))
 print(labs)
 
-# Teste om man kan sette lavs til ylabel 27.04.2018
+# Teste om man kan sette labs til ylabel 27.04.2018
 # plt.ylabel(str(locs))
 
 # plt.locator_params(axis='y', nbins=auto)
