@@ -1,6 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 '''
+v0.004 02.05.2018: Lager ny liste på en ok måte grunnet floats
 v0.003 12.04.2018: Fikset ymax
 v0.002 20.03.2018: Fikse opp temp.log
+'''
+'''
+https://stackoverflow.com/questions/1614236/in-python-how-do-i-convert-all-of-the-items-in-a-list-to-floats
 '''
 
 # OPTIONS
@@ -18,6 +25,8 @@ print(np.version.version)
 print(np.__path__)
 
 import os
+
+
 fs = os.path.getsize("temp.log")
 print("Bytes: "+str(fs))
 if (fs == 0): print("0 bytes, exit"), exit(405)
@@ -210,7 +219,9 @@ else:
 # Fordi vi heter Raspberry Pi
 matplotlib.use('tkagg')
 
+# 02.05.2018: Alltid importere etter tkagg
 import matplotlib.pyplot as plt
+
 
 with open('temp.log',"r") as f:
     lines = f.readlines()
@@ -343,20 +354,19 @@ print(str(npax))
 print("Dette plottes av y: "+str(y))
 print("Type av y som plottes: "+str(type(y)))
 
-print("0: "+str(y[0]))
-print("1: "+str(y[1]))
-print("2: "+str(y[2]))
-print("3: "+str(y[3]))
-
-a = -1
 x = len(y)
-while (a < x):
-	print("Type nummer "+str(a)+" "+str(type(y[a])))
-	a = a+1
-else:
-	print("y av a var ikke sant "+str(a))
-	
-new_list = [float(i) for i in y]
+
+# Check last item
+print("Last item: "+str(y[len(y)-1]))
+
+new_list = []
+for i in y: 
+	print(i)
+	try:
+		new_list.append(float(i))
+	except:
+		print("Exit: Failed convert")
+		
 print("Type av ny liste: "+str(type(new_list)))
 print("Len av ny liste: "+str(len(new_list)))
 

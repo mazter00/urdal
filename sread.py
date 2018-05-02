@@ -1,7 +1,8 @@
 '''
 TODO: Finne ut av dev/tty automatisk
-TODO: Minske endringer
 
+v0.004 - 02.05.2018 - Now imports plotting if >10 minutes, and imports ftp.py if over 15 minutes
+v0.003 - 02.05.2018 - Minsket endringer for lenge siden
 v0.002 - 12.04.2018 - ...
 '''
 
@@ -22,6 +23,10 @@ sport = serial.Serial("/dev/ttyACM0", 115200, timeout=None)
 
 
 tempfile = open('temp.log', 'a')
+
+# ts = timestamp
+tsplotting = 0
+tsftp = 0
 
 
 
@@ -63,3 +68,15 @@ while True:
 		# print(type(tempd))
 		
 	# TODO: Lete etter feilmeldinger fra Arduino.
+	
+	current = int(time.time())
+	diff = current-tsplotting
+	if (diff >= 600):
+		print("Diff is over 10 minutes, runs tsplotting.py")
+		tsplotting = current
+		import plotting.py
+	diff2 = current-tsftp
+	if (diff >= 900):
+		print("Diff2 is over 15 minutes, runs tsftp.py")
+		tsftp = current
+		import ftp.py
