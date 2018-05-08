@@ -41,27 +41,31 @@ void setup() {
 
 // For tid
 int counter;
-int maxcounter = 350;
+int maxcounter = 500;
 
 // Note: Counter = 100 og Delay = 30 -> 19 sekunder
 // Counter = 350 og Delay = 20 -> 64 sekunder (håper på ca. 60-61 sekunder)
+// 08.05.2018: Counter er 500, delay er 20ms. Resultat:
 
 // For sammenligning
 int compare = 0;
 int compare2 = 0;
-char bevegelse[4];
 
-// Debugging av eller på?
+// Er ikke 3 char nok? (Var 4)
+char bevegelse[3];
+
+// Debugging av eller på? Fint hvis det er på, da har Python noe å lage statistikk var. Ellers så er det PONG som gjelder.
 int debug = 1;
 
-// Brukes for [2][3][.][4] som er 4 + 1 for [\n] = 5
-char outtemp[5] = "99.9";
-char outtemp2[5] = "99.8";
-char outtemp3[5] = "99.7";
+// 08.05.2018: Nå med to desimaler
+// Brukes for [2][3][.][4][5] som er 5 + 1 for [\n] = 6
+char outtemp[6] = "99.99";
+char outtemp2[6] = "88.88";
+char outtemp3[6] = "77.77";
 
 // Setter global var, setter egen verdi først. ctemp trengs ikke fordi den settes straks.
-float ctemp2 = 99.8;
-float ctemp3 = 99.7;
+float ctemp2 = 98.76;
+float ctemp3 = 87.65;
 
 void loop() {
   uint16_t rtd = max.readRTD();
@@ -72,20 +76,21 @@ void loop() {
   // Serial.print("Ratio = "); Serial.println(ratio,8);
   // Serial.print("Resistance = "); Serial.println(RREF*ratio,8);
 
-  // Flyttet!
+  // Flyttet! (Python bruker denne for å lese temperaturen...)
   // Serial.print("Temperature = ");
 
   // Deklarerer current temp
   float ctemp = max.temperature(RNOMINAL, RREF);
 
-  // d2str gjøres hver gang, 4 i total length, 1 desimal
-  dtostrf(ctemp, 4, 1, outtemp);
+  // d2str gjøres hver gang, 5 i total length, 2 desimaler (4,1 for en desimal)
+  dtostrf(ctemp, 5, 2, outtemp);
 
-  // Note to self: ctemp er float og outtemp er char array(?) på 5 med current temp
+  // Note to self: ctemp er float og outtemp er char array(?) på 6 (5 med en desimal) med current temp
 
   compare = strcmp(outtemp, outtemp2);
   compare2 = strcmp(outtemp, outtemp3);
 
+  // Verdi #1 mot verdi #3
   // Vil sjekke verdi 1 (current) mot verdi 3 (23.6, 23.7, >23.6<)
 
   if (debug == 1) {
@@ -102,6 +107,8 @@ void loop() {
     Serial.println(outtemp3);
   }
 
+  // compare2 må være ulik *OG* compare må også være ulik
+  
   if (compare2 != 0) {
 
     if (compare != 0) {
@@ -121,7 +128,9 @@ void loop() {
       Serial.println(outtemp);
 
       // Dette er float, current temp
-      Serial.print("Temperature (med float) = ");
+      // 08.05.2018: Ikke så sikker på det, nei...
+      // Uansett, her er det Python leser som temperatur
+      Serial.print("Temperature = ");
       // Gammel: Serial.println(ctemp);
       // Nå med en desimal, current temp, som skal bli snappet opp av Python
       Serial.println(outtemp);
@@ -191,10 +200,10 @@ void loop() {
     Serial.print("Counter: ");
     Serial.print(counter);
 
-    Serial.print(" Maxcounter: ");
+    Serial.print(" - Maxcounter: ");
     Serial.print(maxcounter);
 
-    Serial.print(" Last known Temperature: = ");
+    Serial.print(" - Last known Temperature: = ");
     Serial.println(outtemp);
 
     counter = counter - maxcounter;
