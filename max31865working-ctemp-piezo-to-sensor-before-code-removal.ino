@@ -1,5 +1,7 @@
 // #include <Time.h>
 // #include <TimeLib.h>
+// Ser ikke ut som at Aurdino are "tid" i seg, bruker counter og loops istedenfor
+// 08.05.2018: Har et fungerende script med en desimal
 
 /***************************************************
   This is a library for the Adafruit PT100/P1000 RTD Sensor w/MAX31865
@@ -42,14 +44,15 @@ int counter;
 int maxcounter = 350;
 
 // Note: Counter = 100 og Delay = 30 -> 19 sekunder
-// Counter = 350 og Delay = 20 -> 64 sekunder (håper på ca. 60 sekunder)
-
+// Counter = 350 og Delay = 20 -> 64 sekunder (håper på ca. 60-61 sekunder)
 
 // For sammenligning
 int compare = 0;
+int compare2 = 0;
 char bevegelse[4];
-int debug = 0;
 
+// Debugging av eller på?
+int debug = 1;
 
 // Brukes for [2][3][.][4] som er 4 + 1 for [\n] = 5
 char outtemp[5] = "99.9";
@@ -81,60 +84,78 @@ void loop() {
   // Note to self: ctemp er float og outtemp er char array(?) på 5 med current temp
 
   compare = strcmp(outtemp, outtemp2);
+  compare2 = strcmp(outtemp, outtemp3);
+
+  // Vil sjekke verdi 1 (current) mot verdi 3 (23.6, 23.7, >23.6<)
 
   if (debug == 1) {
     Serial.print("DEBUG Compare: ");
-    Serial.println(compare);
+    Serial.print(compare);
+    Serial.print(" vs ");
+    Serial.print(compare2);
 
-    Serial.println(outtemp);
-    Serial.println(outtemp2);
-  }
-
-  if (compare != 0) {
-    // Wow, ulik betyr utsendelse
-
-    if (compare > 0) {
-      strcpy(bevegelse, "OPP");
-    }   else if (compare < 0) {
-      strcpy(bevegelse, "NED");
-    }
-
-    Serial.print("Gikk ");
-    Serial.print(bevegelse);
-    Serial.print(" fra ");
+    Serial.print(" === Outtemp 1, 2 og 3: ");
+    Serial.print(outtemp);
+    Serial.print(" vs ");
     Serial.print(outtemp2);
-    Serial.print(" til ");
-    Serial.println(outtemp);
-
-    // Dette er float, current temp
-    Serial.print("Temperature (med float) = ");
-    // Gammel: Serial.println(ctemp);
-    // Nå med en desimal, current temp, som skal bli snappet opp av Python
-    Serial.println(outtemp);
-
-    //    Serial.println("Before strcopy");
-    //    Serial.println(outtemp);
-    //    Serial.println(outtemp2);
-    //
-
-    strcpy(outtemp2, outtemp);
-    counter = 0;
-    compare = 0;
-
-    //
-    //    Serial.println("Etter strcopy");
-    //    Serial.println(outtemp);
-    //    Serial.println(outtemp2);
-
-    // Serial.println("After strcopy, are they similar?!");
-    //    if (outtemp != outtemp2) {
-    //      Serial.println("Un-equal");
-    //    }
-    //    if (outtemp == outtemp2) {
-    //      Serial.println("Equal, as it should be");
-    //    }
+    Serial.print(" vs ");
+    Serial.println(outtemp3);
   }
 
+  if (compare2 != 0) {
+
+    if (compare != 0) {
+      // Wow, ulik betyr utsendelse
+
+      if (compare > 0) {
+        strcpy(bevegelse, "OPP");
+      }   else if (compare < 0) {
+        strcpy(bevegelse, "NED");
+      }
+
+      Serial.print("Gikk ");
+      Serial.print(bevegelse);
+      Serial.print(" fra ");
+      Serial.print(outtemp2);
+      Serial.print(" til ");
+      Serial.println(outtemp);
+
+      // Dette er float, current temp
+      Serial.print("Temperature (med float) = ");
+      // Gammel: Serial.println(ctemp);
+      // Nå med en desimal, current temp, som skal bli snappet opp av Python
+      Serial.println(outtemp);
+
+      //    Serial.println("Before strcopy");
+      //    Serial.println(outtemp);
+      //    Serial.println(outtemp2);
+      //
+
+      // verdi 2 til verdi 3, verdi 1 til verdi 2
+      strcpy(outtemp3, outtemp2);
+      strcpy(outtemp2, outtemp);
+
+      // Resetter variabler
+
+      counter = 0;
+
+      compare = 0;
+      compare2 = 0;
+
+      //
+      //    Serial.println("Etter strcopy");
+      //    Serial.println(outtemp);
+      //    Serial.println(outtemp2);
+
+      // Serial.println("After strcopy, are they similar?!");
+      //    if (outtemp != outtemp2) {
+      //      Serial.println("Un-equal");
+      //    }
+      //    if (outtemp == outtemp2) {
+      //      Serial.println("Equal, as it should be");
+      //    }
+    }
+  }
 
   // Check and print any faults
   uint8_t fault = max.readFault();
@@ -161,7 +182,7 @@ void loop() {
     max.clearFault();
   }
 
-  // 09.04.2018: Sende PONG for hver 350. utsendelse
+  // 09.04.2018: Sende PONG for hver 350. "count"
 
   counter = counter + 1;
   // max counter er satt i starten av scriptet. Angir max counter før PONG
@@ -178,7 +199,7 @@ void loop() {
 
     counter = counter - maxcounter;
     if (counter != 0) {
-      Serial.print("Counter satt til: ");
+      Serial.print("ERROR: Counter satt til: ");
       Serial.println(counter);
     }
   }
