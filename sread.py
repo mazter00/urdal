@@ -1,6 +1,9 @@
-'''
-TODO: Finne ut av dev/tty automatisk
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+'''
+v0.007 08.05.2018 11:43 - With a little bit of color
+v0.006 08.05.2018: Finds avaible devtty on its own
 v0.005 07.05.2018: Now *runs* script plott.py and ftp.py using os.system
 v0.004 - 02.05.2018 - Now imports plotting if >10 minutes, and imports ftp.py if over 15 minutes
 v0.003 - 02.05.2018 - Minsket endringer for lenge siden
@@ -13,17 +16,22 @@ from time import sleep
 import time
 import os
 
-# sport = serial.Serial("/dev/ttyACM12", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM8", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM7", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM6", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM5", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM4", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM3", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM2", 115200, timeout=None)
-# sport = serial.Serial("/dev/ttyACM1", 115200, timeout=None)
-sport = serial.Serial("/dev/ttyACM0", 115200, timeout=None)
+# Fargelegging
+from colorama import init
+init()
+from colorama import Fore, Back, Style
+init(autoreset=True)
 
+# Finne åpen port til Aurdino
+os.system("python3 devtty.py")
+with open("devtty.txt") as devfile:
+	port = devfile.readline().strip()
+	print("port: "+str(port))
+	if port is None:
+		exit("Fant ikke åpen  port")
+		
+print("Opening port at: "+str(port))
+sport = serial.Serial(port, 115200, timeout=None)
 
 tempfile = open('temp.log', 'a')
 
@@ -48,7 +56,7 @@ while True:
 	debug = 1
 	if (debug == 1) and a: 
 		if "DEBUG Compare" not in str(a,'utf-8'):
-			print("Debug i python: "+str(a,'utf-8'))
+			print(Style.DIM+"Debug i python: "+str(a,'utf-8'))
 	
 	# Anta at variabel a alltid finnes
 	if b"Temperature" in a:
@@ -62,10 +70,11 @@ while True:
 			print("IndexError: A er: "+str(a))
 		
 		tempd = temp.decode('utf-8')
+		
 		d = datetime.now().isoformat()
 		# print(d)
 		# print("Skrevet til fil: "+d+' '+tempd)
-		print(d+' '+tempd)
+		print(Style.DIM+d+' '+Back.WHITE+Fore.BLUE+" "+str(tempd)+" ")
 		tempfile.write(d+' '+tempd+'\n')
 		tempfile.flush()
 		# print(type(tempd))
@@ -82,13 +91,15 @@ while True:
 	# print(diff)
 	
 	if (diff >= 600):
-		print("Diff is over 10 minutes, runs plotting.py")
+		print(Style.BRIGHT+"Diff is over 10 minutes, runs plotting.py")
 		tsplotting = current
 		os.system("python3 ./plotting.py")
 	
 	diff2 = current-tsftp
 	
 	if (diff2 >= 900):
-		print("Diff2 is over 15 minutes, runs ftp.py")
+		print(Style.BRIGHT+"Diff2 is over 15 minutes, runs ftp.py")
 		tsftp = current
 		os.system("python3 ./ftp.py")
+
+print("sread.py is finished. Re-run it if needed")

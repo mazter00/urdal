@@ -14,6 +14,14 @@ https://stackoverflow.com/questions/1614236/in-python-how-do-i-convert-all-of-th
 # OPTIONS
 
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
+# 08.05.2018: Vi tillar to desimaler fordi matplotlib takler det
+
+# Fargelegging
+from colorama import init
+init()
+from colorama import Fore, Back, Style
+init(autoreset=True)
+
 
 import sys
 import time
@@ -24,11 +32,14 @@ import datetime
 # 07.05.2018: For bruk av x-aksen
 import matplotlib.dates as mdates
 
+# 08.05.2018: For "jet" colormap
+from matplotlib import cm
+
 argplot = False
 
 if (len(sys.argv) > 1):
 	if (sys.argv[1] == "-plot"):
-		print("Plot argument found, setting it to True")
+		print(Style.BRIGHT+Fore.YELLOW+"Plot argument found, setting it to True")
 		drawplot = True
 		argplot = True
 		
@@ -261,8 +272,6 @@ with open('temp.log',"r") as f:
 
 print("Len av y: "+str(len(y))+" og len av x: "+str(len(x)))
 
-# 0
-
 # Finne egen min og max value av y
 
 s = sorted(y)
@@ -271,101 +280,45 @@ ymin = s[0]
 
 # 12.04.2018: Jeg finner "NED" randomt... Lager loop for å unngå.
 # 07.05.2018: Dette er en feil ifra kildefilen. Kanskje lage en sjekk i sread.py? [TODO]
+# 08.05.2018: Vet du hva, vi looper hele lista vi...
 
-loopc = 0
+count = 0
+pop = False
+ybefore = len(y)
 
-# Settings false value
-ymax = ""
+for i in y:
+	try:
+		i2 = float(i)
+	except:
+		print(Fore.RED+Style.BRIGHT+"Error in the shoe!")
+		print("i: "+(str(i)))
+		print("Delete item no. "+str(count))
+		pop = True
+	if pop is True: 
+		del y[count]
+		print("POPPED item "+str(count)+" in list Y!")
+		
+		del x[count]
+		print("POPPED item "+str(count)+" in list X!")
+		count = count-1
+		pop = False
 
-while ("." not in ymax):
-	print("[Invalid ymax] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
-	loopc += 1
-	ymax = s[len(y)-loopc]
-	print("[After] Ymax er: "+str(ymax)+" og loopc er: "+str(loopc))
+	count = count+1
 
-print("Antall loop for å finne korrekt ymax: "+str(loopc))
-print("ymax: "+str(ymax)+" Type: "+str(type(ymax)))
+yafter = len(y)
+ydifference = ybefore-yafter
 
-print("Loop done. ymax er: "+str(ymax))
-maxtype = type(ymax)
-print("Type er: "+str(maxtype))
+print(Fore.GREEN+Style.BRIGHT+"All good with the ylist")
+print("Number of items from y deleted (if any): "+str(ydifference))
 
-print("Ymax: "+str(ymax))
+# Assert the list is correct size
+assert len(y) == len(x), "Len av ylist and x is not the same"
 
-# tymi = type(ymin)
-# tyma = type(ymax)
-
-ymin = float(ymin)
-ymax = float(ymax)
-
-print("Type av ymin: "+str(type(ymin)))
-print("Type av ymax: "+str(type(ymax)))
-
-print("ymin: "+str(ymin))
-print("ymax: "+str(ymax))
-
-ymin2 = math.floor(ymin)
-ymax2 = round(ymax)
-
-print("ymin2: "+str(ymin2))
-print("ymax2: "+str(ymax2))
-
-# Sjekk om jeg kan sjekke om disse er satt
+# Bedring av Plot
+# Grid-lines
 
 plt.grid(True)
 
-npa = np.arange(ymin2,ymax2,0.1)
-print("Type av npa: "+str(type(npa)))
-print("Numpy arange: "+str(npa))
-
-linspace = np.linspace(ymin2,ymax2,num=ymax2-ymin,endpoint=False,retstep=True,dtype=int)
-print("Linspace: "+str(linspace))
-
-# linspacelist = linspace.tolist()
-# print(linspacelist)
-
-# Se nærmere på denne - skal ikke ha stepping?
-# print("Før vi setter inn npa: "+str(npa))
-# print("Før vi setter inn linsace: "+str(linspace))
-
-# 30.04.2018: Ikke sette yticks og ikke sette ylabels
-
-# 30.04.2018: Settes dette, så settes det tett
-# plt.yticks(npa)
-# print("yticks fra npa has been set!")
-
-# 30.04.2018: Settes i hytt og pine
-# plt.ylabel(npa)
-# print("ylabel has been set!")
-
-# Virker ikke: plt.set_yticklabels(npa)
-# Virker heller ikke: plt.yticklabels(npa)
-
-# numpy arrange X axis
-npax = np.arange(24)
-
-# Printer 0-23 som forventet
-print(str(npax))
-
-# plt.xticks(npax)
-# plt.xlabels(npax)
-
-# 30.04.2018: Må sikkert importere noe?
-# 30.04.2018> Må draw'e først
-# plt.draw()
-# plt.plot.Axis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-# ax rett før plot
-# Bruke plt for å unnga dobling av grafer
-# ax = plt().gca()
-# ax = figure().gca()
-# print(ax)
-
-# print("Dette plottes av y: "+str(y))
-print("Type av y som plottes: "+str(type(y)))
-
-# Check last item
-print("Last item: "+str(y[len(y)-1]))
 
 new_list = []
 for i in y: 
@@ -373,7 +326,9 @@ for i in y:
 	try:
 		new_list.append(float(i))
 	except:
-		print("Exit: Failed convert")
+		print("Exit: Failed convert to float")
+		print("i er: "+str(i))
+		print("y er: "+str(y[i]))
 		
 print("Type av ny liste: "+str(type(new_list)))
 print("Len av ny liste: "+str(len(new_list)))
@@ -399,7 +354,7 @@ print(type(xlist[0]))
 
 # Deretter fra time_struck til datetime
 
-xlist2 =  []
+xlist2 = []
 # d finnes, setter den til None	
 d = None
 
@@ -410,32 +365,35 @@ for i in range(0, len(xlist)):
 
 # Selve plotte-kommandoen
 
-plt.plot(xlist2,new_list)
+plt.plot(xlist2,new_list,'k.',linewidth=1, markersize=1)
 # plt.plot(npa)
 
 # Konfig ETTER plot
+
+# Finne en sensible min og max for å vise i matplotlib ETTER plot
+
+ymax = float(max(y))
+ymin = float(min(y))
+
+if (ymin > 20): 
+	print("Setting own limit on y-axis, lower, to 20")
+	plt.gca().set_ylim(bottom=20)
 
 # For x-aksen til å vise time:minutt
 myFmt = mdates.DateFormatter('%H:%M')
 plt.gca().xaxis.set_major_formatter(myFmt)
 
-
 plt.ylabel('Temperatur')
 plt.title(dagensdatostring)
 
-# Gjør ikke mye forskjell, om noe
-# plt.autoscale(enable=True, axis='y')
+# --- Legend eller Annontation ---
+
+plt.text(0,0,"Dagens høyeste temperatur",color='red',fontsize=30)
 
 # Her finner vi ut av vi har 40 ylabels
 locs, labs = plt.yticks()
-print("Locs: "+str(locs))
-print(labs)
-
-# Teste om man kan sette labs til ylabel 27.04.2018
-# plt.ylabel(str(locs))
-
-# plt.locator_params(axis='y', nbins=auto)
-# plt.locator_params(axis='x', nbins=auto)
+# print("Locs: "+str(locs))
+# print(labs)
 
 plt.savefig("temp/urdal/temp.png")
 
