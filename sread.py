@@ -1,6 +1,7 @@
 '''
 TODO: Finne ut av dev/tty automatisk
 
+v0.005 07.05.2018: Now *runs* script plott.py and ftp.py using os.system
 v0.004 - 02.05.2018 - Now imports plotting if >10 minutes, and imports ftp.py if over 15 minutes
 v0.003 - 02.05.2018 - Minsket endringer for lenge siden
 v0.002 - 12.04.2018 - ...
@@ -9,6 +10,8 @@ v0.002 - 12.04.2018 - ...
 from datetime import datetime
 import serial
 from time import sleep
+import time
+import os
 
 # sport = serial.Serial("/dev/ttyACM12", 115200, timeout=None)
 # sport = serial.Serial("/dev/ttyACM8", 115200, timeout=None)
@@ -70,13 +73,22 @@ while True:
 	# TODO: Lete etter feilmeldinger fra Arduino.
 	
 	current = int(time.time())
+	
+	# Skal være int for senere referanse: type(current)
+	
+	# print(current)
+	
 	diff = current-tsplotting
+	# print(diff)
+	
 	if (diff >= 600):
-		print("Diff is over 10 minutes, runs tsplotting.py")
+		print("Diff is over 10 minutes, runs plotting.py")
 		tsplotting = current
-		import plotting.py
+		os.system("python3 ./plotting.py")
+	
 	diff2 = current-tsftp
-	if (diff >= 900):
-		print("Diff2 is over 15 minutes, runs tsftp.py")
+	
+	if (diff2 >= 900):
+		print("Diff2 is over 15 minutes, runs ftp.py")
 		tsftp = current
-		import ftp.py
+		os.system("python3 ./ftp.py")

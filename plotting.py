@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.005 07.05.2018: Lagd en argv, "-plot"
 v0.004 02.05.2018: Lager ny liste på en ok måte grunnet floats
 v0.003 12.04.2018: Fikset ymax
 v0.002 20.03.2018: Fikse opp temp.log
@@ -13,19 +14,45 @@ https://stackoverflow.com/questions/1614236/in-python-how-do-i-convert-all-of-th
 # OPTIONS
 
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
+
+import sys
+import time
+# 07.05.2018: Datetime behøves for string->timestruct->datime->whatever matplotlib krever
+from time import mktime
+import datetime
+
+# 07.05.2018: For bruk av x-aksen
+import matplotlib.dates as mdates
+
+argplot = False
+
+if (len(sys.argv) > 1):
+	if (sys.argv[1] == "-plot"):
+		print("Plot argument found, setting it to True")
+		drawplot = True
+		argplot = True
+		
+	else:
+		print("Sys.argv 1: "+str(sys.argv[1]))
+
+
 kuttdesimaler = False
-drawplot = True
+
+# Set standard showplot
+if (argplot == False): drawplot = False
 
 import matplotlib
-print(matplotlib.__version__)
-print(str(matplotlib.__file__))
+# print(matplotlib.__version__)
+# print(str(matplotlib.__file__))
 
 import numpy as np
-print(np.version.version)
-print(np.__path__)
+# Bruker jeg numpy til noe som helst nå? 07.05.2018
+# print(np.version.version)
+# print(np.__path__)
 
 import os
 
+# Filen som skrives til heter alltid temp.log
 
 fs = os.path.getsize("temp.log")
 print("Bytes: "+str(fs))
@@ -45,7 +72,8 @@ def fikslinje():
 		
 		s = f.split()
 		print("0: "+str(s[0])+" 1: "+str(s[1]))
-		# TODO: Kode ikke ferdig. Fikser ikke det jeg vil fikse
+		# TODO: Kode ikke ferdig.
+		# Dette er et ikke-problem, men en bug som kan komme opp senere
 		# exit(10)
 		pass
 
@@ -110,9 +138,11 @@ print("Øverste dato kan være: "+str(firstdate))
 
 # Sjekk for folder
 
-import os
+# Allerede importert
+# import os
+
 cwd = os.getcwd()
-print("cwd: "+str(cwd))
+print("Current Working Directory: "+str(cwd))
 
 def checkfolder(firstdate):
 
@@ -213,47 +243,34 @@ if kuttdesimaler is True:
 else:
 	print("Beholder desimalene")
 
-# print("exit")
-# exit(9)
-
 # Fordi vi heter Raspberry Pi
 matplotlib.use('tkagg')
 
 # 02.05.2018: Alltid importere etter tkagg
 import matplotlib.pyplot as plt
 
+# --- KODE FOR PLOTTINGz --- 
 
 with open('temp.log',"r") as f:
     lines = f.readlines()
-    if (lines == 0): print("Ingen linjer i temp.log, exit"), exit(404)
+    if (lines == 0): print("Ingen linjer i temp.log, exit"), exit("404")
     
-    # Lese kun y, x og dato tar vi senere.
-    # x = [line.split()[0] for line in lines]
+    # 07.05.2018: Leser nå både x og y
+    x = [line.split()[0] for line in lines]
     y = [line.split()[1] for line in lines]
 
-# Sette ax for senere, MaxNLocator er ETTER plot, import as figure
-# from matplotlib.pyplot import figure as figure
-# from matplotlib.ticker import MaxNLocator as MaxNLocator
+print("Len av y: "+str(len(y))+" og len av x: "+str(len(x)))
 
-
-# Override X from the start
-
-x = np.linspace(0,24,24,endpoint=False)
-print("Len av generert x: "+str(len(x)))
-print(x)
-
-# print(y)
-
-# print(len(x))
-print("Len av y: "+str(len(y)))
+# 0
 
 # Finne egen min og max value av y
 
 s = sorted(y)
-print("s: "+str(s))
+# print("s: "+str(s))
 ymin = s[0]
 
 # 12.04.2018: Jeg finner "NED" randomt... Lager loop for å unngå.
+# 07.05.2018: Dette er en feil ifra kildefilen. Kanskje lage en sjekk i sread.py? [TODO]
 
 loopc = 0
 
@@ -268,8 +285,6 @@ while ("." not in ymax):
 
 print("Antall loop for å finne korrekt ymax: "+str(loopc))
 print("ymax: "+str(ymax)+" Type: "+str(type(ymax)))
-
-	
 
 print("Loop done. ymax er: "+str(ymax))
 maxtype = type(ymax)
@@ -326,8 +341,6 @@ print("Linspace: "+str(linspace))
 # Virker ikke: plt.set_yticklabels(npa)
 # Virker heller ikke: plt.yticklabels(npa)
 
-# Lage "ticks" for x
-
 # numpy arrange X axis
 npax = np.arange(24)
 
@@ -348,20 +361,15 @@ print(str(npax))
 # ax = figure().gca()
 # print(ax)
 
-
-# plt.plot(x)
-
-print("Dette plottes av y: "+str(y))
+# print("Dette plottes av y: "+str(y))
 print("Type av y som plottes: "+str(type(y)))
-
-x = len(y)
 
 # Check last item
 print("Last item: "+str(y[len(y)-1]))
 
 new_list = []
 for i in y: 
-	print(i)
+	# print(i)
 	try:
 		new_list.append(float(i))
 	except:
@@ -370,8 +378,46 @@ for i in y:
 print("Type av ny liste: "+str(type(new_list)))
 print("Len av ny liste: "+str(len(new_list)))
 
-plt.plot(new_list)
+# --- Lage x-akse ---
+
+# Lage loop som konverterer. Riktig format er: %Y-%m-%dT%H:%M:%S.%f
+
+print("Before x loop, len: "+str(len(x)))
+print("Type av x before loop: "+str(type(x)))
+
+i = None
+xlist = []
+
+# Fra string til time_struct
+
+for i in range(0, len(x)):
+	xlist.append(time.strptime(x[i],"%Y-%m-%dT%H:%M:%S.%f"))
+	# print("type: "+str(type(var)))
+	
+print(xlist[0])
+print(type(xlist[0]))
+
+# Deretter fra time_struck til datetime
+
+xlist2 =  []
+# d finnes, setter den til None	
+d = None
+
+for i in range(0, len(xlist)):
+	dt = datetime.fromtimestamp(mktime(xlist[i]))
+	xlist2.append(dt)
+	# print("dt: "+str(dt)+" i: "+str(i))
+
+# Selve plotte-kommandoen
+
+plt.plot(xlist2,new_list)
 # plt.plot(npa)
+
+# Konfig ETTER plot
+
+# For x-aksen til å vise time:minutt
+myFmt = mdates.DateFormatter('%H:%M')
+plt.gca().xaxis.set_major_formatter(myFmt)
 
 
 plt.ylabel('Temperatur')
@@ -390,12 +436,6 @@ print(labs)
 
 # plt.locator_params(axis='y', nbins=auto)
 # plt.locator_params(axis='x', nbins=auto)
-
-
-# Last best hope
-# plt og ikke ax
-# Er det denne som lager to plots?
-# plt.axes.yaxis.set_major_locator(MaxNLocator(integer=True))
 
 plt.savefig("temp/urdal/temp.png")
 
