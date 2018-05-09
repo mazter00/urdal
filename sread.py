@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.008 09.05.2018 - Now autosaves temp.log once per hour
 v0.007 08.05.2018 11:43 - With a little bit of color
 v0.006 08.05.2018: Finds avaible devtty on its own
 v0.005 07.05.2018: Now *runs* script plott.py and ftp.py using os.system
@@ -30,7 +31,7 @@ with open("devtty.txt") as devfile:
 	if port is None:
 		exit("Fant ikke åpen  port")
 		
-print("Opening port at: "+str(port))
+print(Style.DIM+"Opening port at: "+str(port))
 sport = serial.Serial(port, 115200, timeout=None)
 
 tempfile = open('temp.log', 'a')
@@ -38,8 +39,7 @@ tempfile = open('temp.log', 'a')
 # ts = timestamp
 tsplotting = 0
 tsftp = 0
-
-
+tsautosave = 0
 
 while True:
 	# Arduino = 20, Python = .21
@@ -58,6 +58,8 @@ while True:
 		if "DEBUG Compare" not in str(a,'utf-8'):
 			print(Style.DIM+"Debug i python: "+str(a,'utf-8'))
 	
+	current = int(time.time())
+	
 	# Anta at variabel a alltid finnes
 	if b"Temperature" in a:
 		# print("Temperature found in string")
@@ -75,31 +77,33 @@ while True:
 		# print(d)
 		# print("Skrevet til fil: "+d+' '+tempd)
 		print(Style.DIM+d+' '+Back.WHITE+Fore.BLUE+" "+str(tempd)+" ")
+		
+		savediff = current-tsautosave
+		if (savediff >= 3600):
+			tempfile.close()
+			print(Style.BRIGHT+"Autosaved temp.log")
+			tempfile = open('temp.log', 'a')
+			tsautosave = current
+			
 		tempfile.write(d+' '+tempd+'\n')
 		tempfile.flush()
 		# print(type(tempd))
 		
 	# TODO: Lete etter feilmeldinger fra Arduino.
-	
-	current = int(time.time())
-	
-	# Skal være int for senere referanse: type(current)
-	
-	# print(current)
-	
+
 	diff = current-tsplotting
 	# print(diff)
 	
 	if (diff >= 600):
-		print(Style.BRIGHT+"Diff is over 10 minutes, runs plotting.py")
+		print(Style.BRIGHT+"Timestamp is over 10 minutes, runs plotting.py")
 		tsplotting = current
 		os.system("python3 ./plotting.py")
 	
 	diff2 = current-tsftp
 	
 	if (diff2 >= 900):
-		print(Style.BRIGHT+"Diff2 is over 15 minutes, runs ftp.py")
+		print(Style.BRIGHT+"Timestamp is over 15 minutes, runs ftp.py")
 		tsftp = current
 		os.system("python3 ./ftp.py")
 
-print("sread.py is finished. Re-run it if needed")
+print("sread.py is sompleted? Re-run it if needed")
