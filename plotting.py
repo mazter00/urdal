@@ -135,23 +135,26 @@ def yclean(y,x,lines):
 
 			indeks = y.index(i)
 			print("Indeks: "+str(indeks))
-			
-			if i in lines:
-				print("Found it")
-			
-			# print(test)
-			
-			# 11.05.2018: Kan ikke søke på denne måten
-			# indeksO = lines.index(i)
-			# print("Index Original: "+str(indeksO)), exit()
-			
-			j = 0
-			for j in lines:
-				if str(i) in lines[j]:
-					print("Found a partial hit"),exit()
+
+			string = str(i)
+			print("String: "+str(string))
 			
 			del y[indeks]
+			
+			j = 0
+			for j in range(0,len(lines)):
+				if string in lines[j]:
+					print("Found a partial hit at pos: "+str(j))
+					par = lines[j]
+					print("slette pos par?"+str(par))
+					del lines[j]
+					j-1
+					del lines[j]
+			
 			# print("POPPED item "+str(count)+" in list y!")
+			
+			xslett = x[count]
+			print(xslett)
 			
 			del x[count]
 			# print("POPPED item "+str(count)+" in list x!")
