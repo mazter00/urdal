@@ -20,12 +20,20 @@ Lager to lister ut fra temp.log, x og y, konnverterer dette til riktig datatype
 TODO: Ønsker å få skilt sjekking av temp.log til egen pythonfil.
 '''
 
+# 07.05.2018: Datetime behøves for string->timestruct->datime
+from time import mktime
+import datetime
+from colorama import init
+init()
+from colorama import Fore, Back, Style
+init(autoreset=True)
+import sys
+import time
+
 # OPTIONS
 
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
 # 08.05.2018: Vi tillar to desimaler fordi matplotlib takler det
-
-# Fargelegging
 
 def fikslinje():
 	"""Fikse manglende linjeskift i temp.log"""
@@ -60,22 +68,138 @@ def removedecimal():
 	print("Rename succesful? for desimal-kutt")
 	exit()
 	
+def getmax(y,x):
+	if x is None: exit("No second list given")
+	
+	ymax = max(y)
+	print("max er: "+str(ymax))
+	
+	try:
+		float(ymax)
+	except:
+		print("Could not convert to float from max in given list")
+		print("max is: "+str(ymax))
+		indeks = y.index(ymax)
+		
+		del y[indeks]
+		del x[indeks]
+		
+		print("POPPED Item number from both given lists: "+str(indeks))
+		# Gives new max. He who asked should ask again if it's still an error
+		print("Gives new max. He who asked should ask again if it's still an error")
+		return(max(y))
+
+def pop(x,y,i):
+	# print("type: "+str(type(x[i])))
+	# Foreløpig kun x som bruker denne
+
+	ylen = len(y)
+	xlen = len(x)
+	
+	# print("[pop] Before "+str(ylen)+" "+str(xlen))
+	
+	assert (xlen == ylen),"Lists is not of equal length?"
+	
+	# print("i: "+str(i))
+	# print("y av i: "+str(y[i]))
+	# print("x av i: "+str(x[i]))
+	# print("[POP] POPPED Item number from both list y and list x: "+str(i))
+	print("Kunne ikke konvertere til structtime: "+Style.BRIGHT+Fore.RED+str(x[i]))
+	
+	# print("y av i som slettes: "+str(y[i]))
+	
+	del y[i]
+	del x[i]
+	
+	ylen2 = len(y)
+	xlen2 = len(x)
+
+	# print("[pop] After "+str(ylen2)+" "+str(xlen2))
+	
+	assert ((ylen != ylen2) or (xlen != xlen2)),"Item not popped?"
 
 
+def yclean(y,x,lines):
+	""" Cleaning y list by trying to convert to float """
+	count = 0
+	pop = False
+	
+	for i in y:
+		try:
+			i2 = float(i)
+		except:
+			# print("Delete item no. "+str(count))
+			pop = True
+		if pop is True: 
+			print("Kunne ikke konvertere til float: "+Style.BRIGHT+Fore.RED+str(i))
 
+			indeks = y.index(i)
+			print("Indeks: "+str(indeks))
+			
+			if i in lines:
+				print("Found it")
+			
+			# print(test)
+			
+			# 11.05.2018: Kan ikke søke på denne måten
+			# indeksO = lines.index(i)
+			# print("Index Original: "+str(indeksO)), exit()
+			
+			j = 0
+			for j in lines:
+				if str(i) in lines[j]:
+					print("Found a partial hit"),exit()
+			
+			del y[indeks]
+			# print("POPPED item "+str(count)+" in list y!")
+			
+			del x[count]
+			# print("POPPED item "+str(count)+" in list x!")
+			count = count-1
+			pop = False
+
+		count = count+1
+	
+	# Returnere lista
+	return(y)
+
+def maxy(y):
+	
+	maks = max(y)
+	print("Current max: "+str(maks))
+	print("Type: "+str(type(maks)))
+		
+	return(y)
+	
+def xclean(x,y):
+	""" Clean x list by trying to convert string to datetime """
+
+	i = None
+	xlist = []
+	xlen = len(x)
+	
+	# Fra string til time_struct
+
+	# print("Len av liste: "+str(len(x)))
+	for i in range(0, len(x)):
+		# print("x av i: "+str(x[i]))
+		# print("p "+str(time.strptime(x[i],"%Y-%m-%dT%H:%M:%S.%f")))
+		# Prøver å sette xlist som limit istedenfor x?
+		if (i >= len(y)): 
+			print("Slettet så mange at vi har kommet oss til slutten av lista "+str(i)+" "+str(len(x))+ " "+str(len(xlist)))
+			break
+		try:
+			xlist.append(time.strptime(x[i],"%Y-%m-%dT%H:%M:%S.%f"))
+		except:
+			print("Before calling pop...")
+			print("y: "+str(y[i])+" x: "+str(x[i]))
+			print("y: "+str(len(y))+" x: "+str(len(x)) +" xlist: "+str(len(xlist)))
+			pop(x,y,i)
+
+	return(x,xlist)
+			
 def main():
 	# Alt som er i main kjøres, IKKE ved import
-	from colorama import init
-	init()
-	from colorama import Fore, Back, Style
-	init(autoreset=True)
-
-
-	import sys
-	import time
-	# 07.05.2018: Datetime behøves for string->timestruct->datime
-	from time import mktime
-	import datetime
 
 	# 07.05.2018: For bruk av x-aksen
 	import matplotlib.dates as mdates
@@ -88,7 +212,7 @@ def main():
 
 	if (len(sys.argv) > 1):
 		if (sys.argv[1] == "-plot"):
-			print(Style.BRIGHT+Fore.YELLOW+"Plot argument found, setting it to True")
+			print(Style.BRIGHT+Fore.CYAN+"Plot argument found; will show plot at the end")
 			drawplot = True
 			argplot = True
 			
@@ -117,25 +241,19 @@ def main():
 	# Filen som skrives til heter alltid temp.log
 
 	fs = os.path.getsize("temp.log")
-	print("Bytes: "+str(fs))
+	print(Style.BRIGHT+"Bytes: "+Style.NORMAL+str(fs))
 	if (fs == 0): print("0 bytes, exit"), exit(405)
-
-	import math
-
-	fsL = math.floor(fs/33)
-	print("Beregnet Antatt Antall Linjer: "+str(fsL))
-	# exit(2)
 
 	fikslinje()
 
-
+	# Egne funksjoner
 	from merge import today,extractdate,checkfolder
-
 	
 	if kuttdesimaler is True:
 		removedecimal()
 	else:
-		print("Beholder desimalene")
+		pass
+		# print("Beholder desimalene")
 
 	# Fordi vi heter Raspberry Pi
 	matplotlib.use('tkagg')
@@ -147,96 +265,120 @@ def main():
 
 	with open('temp.log',"r") as f:
 		lines = f.readlines()
-		if (lines == 0): print("Ingen linjer i temp.log, exit"), exit("404")
+		lines2 = lines
+	
+	# print(lines)
+	# exit()
+	
+	linjer = len(lines)
+	if (linjer == 0): 
+		print("Ingen linjer i temp.log, exit! Linjer er: "+str(linjer))
+		exit()
+	else:
+		print("Linjer funnet: "+Style.BRIGHT+str(linjer))
+	
+	# 07.05.2018: Leser nå både x og y (tid og value)
+			
+	y = []
+	x = []
+	
+	feil = 0
+	c = 0
+	for i in range(0,len(lines)):
+		x.append(lines[c].split()[0])
+		c = c+1
+	
+	tag = False
+	c = 0
+	for i in range(0,len(lines)):
+		a = lines[c].split()
 		
-		# 07.05.2018: Leser nå både x og y
-		x = [line.split()[0] for line in lines]
-		y = [line.split()[1] for line in lines]
+		try:
+			b = a[1]
+		except:
+			feil = feil+1
+			# print("Feil i item nummer: "+str(c))
+			
+			# Fjerner tilsvarende item i forrige liste som er x
+			del x[c]
+			
+			# print(a)
+			tag = True
+		
+		if tag == False: y.append(b)
+		if tag == True: tag = False
+		c = c+1
 
+	print("Antall feil funnet in liste-laging: "+Style.BRIGHT+str(feil))
 	print("Len av y: "+str(len(y))+" og len av x: "+str(len(x)))
 
-	# Finne egen min og max value av y
-
-	s = sorted(y)
-	# print("s: "+str(s))
-	ymin = s[0]
+	# Assert the list is correct size
+	assert len(y) == len(x), "Len av ylist and x are not the same"
 
 	# 12.04.2018: Jeg finner "NED" randomt... Lager loop for å unngå.
 	# 07.05.2018: Dette er en feil ifra kildefilen. Kanskje lage en sjekk i sread.py? [TODO]
 	# 08.05.2018: Vet du hva, vi looper hele lista vi...
 
-	count = 0
-	pop = False
 	ybefore = len(y)
 
-	for i in y:
-		try:
-			i2 = float(i)
-		except:
-			print(Fore.RED+Style.BRIGHT+"Error in the shoe!")
-			print("i: "+(str(i)))
-			print("Delete item no. "+str(count))
-			pop = True
-		if pop is True: 
-			del y[count]
-			print("POPPED item "+str(count)+" in list Y!")
-			
-			del x[count]
-			print("POPPED item "+str(count)+" in list X!")
-			count = count-1
-			pop = False
-
-		count = count+1
+	y = yclean(y,x,lines)
 
 	yafter = len(y)
-	ydifference = ybefore-yafter
-
-	print(Fore.GREEN+Style.BRIGHT+"All good with the ylist")
-	print("Number of items from y deleted (if any): "+str(ydifference))
+	ydiff = ybefore-yafter
+	print("Slettet "+Style.BRIGHT+str(ydiff)+Style.NORMAL+" linjer fra liste y")
 
 	# Assert the list is correct size
-	assert len(y) == len(x), "Len av ylist and x is not the same"
+	assert len(y) == len(x), "Len av ylist and x are not the same"
 
-	# Bedring av Plot
-	# Grid-lines
+	# Etter vi har fått y til å bli float, så finner vi nå max
+	
+	y = maxy(y)
+	print("Exit, etter maxy")
+	exit()
+	
+	
+	
+	# Renske x
 
-	plt.grid(True)
-
-
-	new_list = []
-	for i in y: 
-		# print(i)
-		try:
-			new_list.append(float(i))
-		except:
-			print("Exit: Failed convert to float")
-			print("i er: "+str(i))
-			print("y er: "+str(y[i]))
-			
-	print("Type av ny liste: "+str(type(new_list)))
-	print("Len av ny liste: "+str(len(new_list)))
-
-	# --- Lage x-akse ---
-
+	xbefore = len(x)
+	
+	# x er rådata
+	# xlist er timestruct
+	# xlist2 er datetime
+	# def xlean lager xlist
+	
+	# print("Problemet er y")
+	# print("len av y før: "+str(len(y)))
+	# print("len av x før: "+str(len(x)))
+	# print("len av xlistfør: 0")
+	
+	x,xlist = xclean(x,y)
+	
+	# print("len av y etter: "+str(len(y)))
+	# print("len av x etter: "+str(len(x)))
+	# print("len av xlist etter: "+str(len(xlist)))
+	
+	print("Returned to me from clean: x and xlist: "+str(len(x))+" "+str(len(xlist)))
+	print("Whereas y is: "+str(len(y)))
+	
+	xafter = len(x)
+	xdiff = xbefore-xafter
+	print("Slettet "+Style.BRIGHT+str(xdiff)+Style.NORMAL+" linjer fra liste x")
+	
+	# Merk at xclean lagde liste xlist
+	print("Xlist is now: "+str(len(xlist)))
+	
+	# assert (len(y) == len(xlist)),"y er ulik xlist?"
+	
+	while (len(y) > len(xlist)):
+		del y[0]
+		print("Popped item from y list")
+	
 	# Lage loop som konverterer. Riktig format er: %Y-%m-%dT%H:%M:%S.%f
 
-	print("Before x loop, len: "+str(len(x)))
-	print("Type av x before loop: "+str(type(x)))
-
-	i = None
-	xlist = []
-
-	# Fra string til time_struct
-
-	for i in range(0, len(x)):
-		xlist.append(time.strptime(x[i],"%Y-%m-%dT%H:%M:%S.%f"))
-		# print("type: "+str(type(var)))
-		
-	print(xlist[0])
-	print(type(xlist[0]))
+	print("X list should be clean and ready to go!")
 
 	# Deretter fra time_struck til datetime
-
 	xlist2 = []
 	# d finnes, setter den til None	
 	d = None
@@ -248,17 +390,95 @@ def main():
 		# print("dt: "+str(dt)+" i: "+str(i))
 
 	# Selve plotte-kommandoen
+	
+	print("y: "+str(len(y)))
+	print("x: "+str(len(x)))
+	print("xlist: "+str(len(xlist)))
+	print("xlist2: "+str(len(xlist2)))
 
-	plt.plot(xlist2,new_list,'k.',linewidth=1, markersize=1)
-	# plt.plot(npa)
-
-	# Konfig ETTER plot
+	plt.grid(True)
+	plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
 
 	# Finne en sensible min og max for å vise i matplotlib ETTER plot
+	# (Egentlig bare minimum)
 
-	ymax = float(max(y))
-	ymin = float(min(y))
+	# Problemer både min og max
+	ymin = min(y)
+	try:
+		float(ymin)
+	except:
+		print("could not convert")
+		indeks = y.index(ymin)
+		print("Index: "+str(indeks))
+		yi = y[indeks]
+		print("Innhold: "+yi)
+		
+		# Pop
+		del y[indeks]
+		del x[indeks]
+			
+	print("Ny ymin, ett forsøk")
+	ymin = min(y)
+	print(ymin)
+	
+	ymin = float(ymin)
+	if (type(ymin)) is not float: print("fortsatt feil, trenger å lage loop"),exit()
+	
+	# getmax forventer to lister
+	ymax = "textstring"
+	while (type(ymax) is not float):
+		print("Calling getmax")
+		ymax = getmax(y,x)
+		if (ymax is None): 
+			print("Break from loop, got None")
+			break
+		print("Return from getmax: "+str(ymax))
+	
+	# Secondary check
+	ymax2 = max(y)
+	print("Ymax2: "+str(ymax2)+" og type er : "+str(type(ymax2)))
+	while ("." not in ymax2):
+		print("Type: "+str(type(ymax2)))
+		indeks = y.index(ymax2)
+		print("desimal ikke funnet, popper ved index "+str(indeks)+" ymax2 var: "+str(ymax2))
+		del y[indeks]
+		ymax2 = max(y)
+		ymax = ymax2
 
+	print("Konverterer max til float er det all good?")
+	ymax = float(ymax)
+	print("Hjelper ikke å si at det er float her, må hente det fra lista direkte")
+	
+	if (ymax < 10): 
+		print("Jesus Crhist!")
+		indeks = y.index(max(y))
+		del y[indeks]
+		ymax = max(y)
+		print("Ny ymax: "+str(ymax))
+	
+	print("Max av y: "+max(y))
+	print("Max (from variable) av y: "+str(ymax))
+	
+	# Final check for datatype
+	while (type(ymax) is not float):
+		print("Wrong datatype for ymax")
+		indeks = y.index(max(y))
+		print(indeks)
+		ytemp = y[indeks]
+		print(ytemp)
+		del y[indeks]
+		try:
+			ymax = float(max(y))
+		except:
+			ymax = "jibberish"
+			print("Could not set a new ymax as float")
+		
+
+	if (type(ymin) is not float):
+		print("Wrong datatype for ymin, exit")
+		exit()
+	
+	# After umput for mr. JO
 	if (ymin > 20): 
 		print("Setting own limit on y-axis, lower, to 20")
 		plt.gca().set_ylim(bottom=20)
