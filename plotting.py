@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.007 11.05.2018 (home): Installs matplotlib if not installed (import failed)
+v0.006 11.05.2018: Lots of tries to cleaning the y and x list
 v0.005 07.05.2018: Lagd en argv, "-plot"
 v0.004 02.05.2018: Lager ny liste på en ok måte grunnet floats
 v0.003 12.04.2018: Fikset ymax
@@ -29,6 +31,7 @@ from colorama import Fore, Back, Style
 init(autoreset=True)
 import sys
 import time
+import os
 
 # OPTIONS
 
@@ -205,7 +208,10 @@ def main():
 	# Alt som er i main kjøres, IKKE ved import
 
 	# 07.05.2018: For bruk av x-aksen
-	import matplotlib.dates as mdates
+	try:
+		import matplotlib.dates as mdates
+	except:
+		os.system("pip3 install matplotlib")
 
 	# 08.05.2018: For "jet" colormap
 	# 09.05.2018: Får ikke til colormap, prøver igjen senere
