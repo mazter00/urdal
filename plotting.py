@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.010 14.05.2018 15:17 Happy with print output for verifylines
 v0.009 14.05.2018 13:49 No longer tests [1] for existense, it will be caught in verifylines
 v0.008 14.05.2018 03:03 (home): Added verifylines. Should replace xclean and yclean. Testing needed.
 v0.007 11.05.2018 (home): Installs matplotlib if not installed (import failed)
@@ -209,9 +210,11 @@ def xclean(x,y):
 def verifylines(lines):
 	""" Verfies by typecasting x and then y at the line before putting in into new list """
 	import time
+	tsstart = time.monotonic()
 	
 	lenx = len(lines)
-	print("[VerifyLines] len er: "+str(lenx))
+	lenx2 = lenx*2
+	print(Style.BRIGHT+"[VerifyLines]"+Style.NORMAL+" len er: "+str(lenx)+" and therefore "+str(lenx2)+" items")
 
 	# Verified x
 	vx = []
@@ -238,9 +241,10 @@ def verifylines(lines):
 			timy = time.strptime(line2[0],"%Y-%m-%dT%H:%M:%S.%f")
 			vxb = True
 		except:
-			print("Typecasting to timestruct failed")
-			print("i er "+str(i))
-			print(line2[0])
+			# print("Typecasting to timestruct failed")
+			# print("i er "+str(i))
+			# print(line2[0])
+			print("Typecasting to "+Style.BRIGHT+"timestruct "+Style.NORMAL+"failed at "+Style.BRIGHT+str(i)+Style.DIM+": "+Style.BRIGHT+Fore.RED+str(line2[0]))
 			vxb = False
 
 		if (vxb == True):
@@ -251,12 +255,21 @@ def verifylines(lines):
 				floaty = float(line2[1])
 				vyb = True
 			except:
-				print("Typecasting to float failed at "+Style.BRIGHT+str(i)+Fore.RED+str(line2[i]))
+				vyb = False
+			
+		# Catching errors
+		if (vyb is False):
+			try:
+				txtline = line2[1]
+				print("Typecasting to "+Style.BRIGHT+"float"+Style.NORMAL+" failed at "+Style.BRIGHT+str(i)+Style.DIM+": "+Style.BRIGHT+Fore.RED+str(txtline))
+			except:
+				# Never happens, but in case, we have 1 try/except for 1 loop, not both. TODO
+				print("Typecasting to float failed at "+Style.BRIGHT+str(i)+Style.DIM+" but cannot show the error"), exit()
+				# print("Typecasting to float failed at "+Style.BRIGHT+str(i)+Fore.RED+str(txtline))
 				# print("i er "+str(i))
 				# print(line2[1])
 
-				vyb = False
-			
+
 		if (vxb and vyb is True):
 			# print("Both are true")
 			# print("vx "+str(vx))
@@ -266,10 +279,31 @@ def verifylines(lines):
 			reallist.append(floaty)
 
 
-	print("Verifylines ended")
-	print("Length is now: " +str(len(reallist)))
+
+	print("Length of elements is now: " +str(len(reallist)))
 	
-	print("How many did we remove?")
+	diffe = lenx2-len(reallist)
+	print("We removed "+Style.BRIGHT+str(diffe)+Style.NORMAL+" items")
+	
+	l = len(reallist)
+	l = int(l/2)
+	
+	print("Which means we are down to (lines): "+Style.BRIGHT+str(l))
+	
+	l2 = lenx-l
+	print("Which means we removed this number of lines: "+Style.BRIGHT+str(l2))
+
+	lrl = len(reallist)
+	errorrate = round((diffe/lrl)*100,4)
+	erp = str(errorrate)+"%"
+	print("The errorrate is: "+Fore.RED+Style.BRIGHT+str(erp))
+
+	
+	print("Verifylines "+Fore.GREEN+"ended")
+	tsend = time.monotonic()
+	diff = tsend-tsstart
+	print("[Verifylines] Time used: "+Style.BRIGHT+str(round(diff,3))+Style.NORMAL+" seconds")
+
 	return(reallist)
 			
 def main():
@@ -368,23 +402,8 @@ def main():
 	
 	# 07.05.2018: Leser nå både x og y (tid og value)
 	
-	feil = 0
-
-	linesba = len(lines)
 	reallist = verifylines(lines)
-	print(len(reallist))
-	# print(reallist)
 	
-	linesba2 = len(lines)
-	
-	print("Len av y: "+str(len(y))+" og len av x: "+str(len(x)))
-
-	# Assert the list is correct size
-	assert len(y) == len(x), "Len av ylist and x are not the same"
-
-	feil = linesba2-linesba
-	print("Antall linjer luket ut: "+Style.BRIGHT+str(feil))
-
 	# Quickly seperate the list into x and y
 	x = []
 	y = []
@@ -406,24 +425,15 @@ def main():
 			y.append(reallist[i])
 		if (m == 0):
 			x.append(reallist[i])
-	
-	assert len(y) == len(x), "Len av ylist and x are not the same"
-
-	ybefore = len(y)
-
-	# No longer uses yclean
-	# y = yclean(y,x,lines)
-
-	yafter = len(y)
-	ydiff = ybefore-yafter
-	print("Slettet "+Style.BRIGHT+str(ydiff)+Style.NORMAL+" linjer fra liste y")
 
 	# Assert the list is correct size
 	assert len(y) == len(x), "Len av ylist and x are not the same"
 
 	# Etter vi har fått y til å bli float, så finner vi nå max
 	
-	y = maxy(y)
+	ymax = maxy(y)
+	print(ymax)
+	print(type(ymax))
 	print("Exit, etter maxy")
 	exit()
 	
