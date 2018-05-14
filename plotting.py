@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.011 14.05.2018 16:38 It now plots again! (four+ days). Problem with y minimum; it's wrong
 v0.010 14.05.2018 15:17 Happy with print output for verifylines
 v0.009 14.05.2018 13:49 No longer tests [1] for existense, it will be caught in verifylines
 v0.008 14.05.2018 03:03 (home): Added verifylines. Should replace xclean and yclean. Testing needed.
@@ -12,6 +13,11 @@ v0.004 02.05.2018: Lager ny liste på en ok måte grunnet floats
 v0.003 12.04.2018: Fikset ymax
 v0.002 20.03.2018: Fikse opp temp.log
 '''
+
+''' TODO:
+14.05.2018 16:37: Fikse slik at y minimum ikke er 10 eller 20 ifra, plutselig droppes et helt tall
+'''
+
 '''
 Kildehenvisning:
 https://stackoverflow.com/questions/1614236/in-python-how-do-i-convert-all-of-the-items-in-a-list-to-floats
@@ -41,20 +47,8 @@ import time
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
 # 08.05.2018: Vi tillar to desimaler fordi matplotlib takler det
 
-def fikslinje():
-	"""Fikse manglende linjeskift i temp.log"""
-	
-	with open("temp.log") as ff:
-		f = ff.read()
-		
-		s = f.split()
-		print("[fikslinje] 0: "+str(s[0])+" 1: "+str(s[1]))
-		# TODO: Kode ikke ferdig.
-		# Dette er et ikke-problem, men en bug som kan komme opp senere
-		# exit(10)
-		# pass
-
 def removedecimal():
+	""" Trenger nok denne koden litt til hvis vi skal bytte sensor og den har tre desimaler """
 	temp2 = open("temp2.log",'w')
 	
 	count = 0
@@ -73,139 +67,6 @@ def removedecimal():
 	os.rename("temp2.log","temp.log")
 	print("Rename succesful? for desimal-kutt")
 	exit()
-	
-def getmax(y,x):
-	if x is None: exit("No second list given")
-	
-	ymax = max(y)
-	print("max er: "+str(ymax))
-	
-	try:
-		float(ymax)
-	except:
-		print("Could not convert to float from max in given list")
-		print("max is: "+str(ymax))
-		indeks = y.index(ymax)
-		
-		del y[indeks]
-		del x[indeks]
-		
-		print("POPPED Item number from both given lists: "+str(indeks))
-		# Gives new max. He who asked should ask again if it's still an error
-		print("Gives new max. He who asked should ask again if it's still an error")
-		return(max(y))
-
-def pop(x,y,i):
-	# print("type: "+str(type(x[i])))
-	# Foreløpig kun x som bruker denne
-
-	ylen = len(y)
-	xlen = len(x)
-	
-	# print("[pop] Before "+str(ylen)+" "+str(xlen))
-	
-	assert (xlen == ylen),"Lists is not of equal length?"
-	
-	# print("i: "+str(i))
-	# print("y av i: "+str(y[i]))
-	# print("x av i: "+str(x[i]))
-	# print("[POP] POPPED Item number from both list y and list x: "+str(i))
-	print("Kunne ikke konvertere til structtime: "+Style.BRIGHT+Fore.RED+str(x[i]))
-	
-	# print("y av i som slettes: "+str(y[i]))
-	
-	del y[i]
-	del x[i]
-	
-	ylen2 = len(y)
-	xlen2 = len(x)
-
-	# print("[pop] After "+str(ylen2)+" "+str(xlen2))
-	
-	assert ((ylen != ylen2) or (xlen != xlen2)),"Item not popped?"
-
-
-def yclean(y,x,lines):
-	""" Cleaning y list by trying to convert to float """
-	count = 0
-	pop = False
-	
-	for i in y:
-		try:
-			i2 = float(i)
-		except:
-			# print("Delete item no. "+str(count))
-			pop = True
-		if pop is True: 
-			print("Kunne ikke konvertere til float: "+Style.BRIGHT+Fore.RED+str(i))
-
-			indeks = y.index(i)
-			print("Indeks: "+str(indeks))
-
-			string = str(i)
-			print("String: "+str(string))
-			
-			del y[indeks]
-			
-			j = 0
-			for j in range(0,len(lines)):
-				if string in lines[j]:
-					print("Found a partial hit at pos: "+str(j))
-					par = lines[j]
-					print("slette pos par?"+str(par))
-					del lines[j]
-					j-1
-					del lines[j]
-			
-			# print("POPPED item "+str(count)+" in list y!")
-			
-			xslett = x[count]
-			print(xslett)
-			
-			del x[count]
-			# print("POPPED item "+str(count)+" in list x!")
-			count = count-1
-			pop = False
-
-		count = count+1
-	
-	# Returnere lista
-	return(y)
-
-def maxy(y):
-	
-	maks = max(y)
-	print("Current max: "+str(maks))
-	print("Type: "+str(type(maks)))
-		
-	return(y)
-	
-def xclean(x,y):
-	""" Clean x list by trying to convert string to datetime """
-
-	i = None
-	xlist = []
-	xlen = len(x)
-	
-	# Fra string til time_struct
-
-	# print("Len av liste: "+str(len(x)))
-	for i in range(0, len(x)):
-		# print("x av i: "+str(x[i]))
-		# print("p "+str(time.strptime(x[i],"%Y-%m-%dT%H:%M:%S.%f")))
-		# Prøver å sette xlist som limit istedenfor x?
-		if (i >= len(y)): 
-			print("Slettet så mange at vi har kommet oss til slutten av lista "+str(i)+" "+str(len(x))+ " "+str(len(xlist)))
-			break
-		try:
-			xlist.append(time.strptime(x[i],"%Y-%m-%dT%H:%M:%S.%f"))
-		except:
-			print("Before calling pop...")
-			print("y: "+str(y[i])+" x: "+str(x[i]))
-			print("y: "+str(len(y))+" x: "+str(len(x)) +" xlist: "+str(len(xlist)))
-			pop(x,y,i)
-
-	return(x,xlist)
 
 def verifylines(lines):
 	""" Verfies by typecasting x and then y at the line before putting in into new list """
@@ -215,18 +76,15 @@ def verifylines(lines):
 	lenx = len(lines)
 	lenx2 = lenx*2
 	print(Style.BRIGHT+"[VerifyLines]"+Style.NORMAL+" len er: "+str(lenx)+" and therefore "+str(lenx2)+" items")
-
-	# Verified x
-	vx = []
-	vy = []
 	
 	line2 = []
 
-	# I have the option to create x and y right now
 	reallist = []
 	
 	timy = None
 	floaty = None
+	
+	errors = 0
 	
 
 	for i in range(0, len(lines)):
@@ -236,7 +94,23 @@ def verifylines(lines):
 		# print(line2)
 		# print(line2[0])
 		# print(line2[1])
+		
+		# Third check first
+		
+		if len(line2) > 2: 
+			strline = ' '.join(line2[2:])
+			errors = errors+1
+			print("["+str(errors)+"] "+"Third element was present"+Style.BRIGHT+Fore.YELLOW+": "+Style.NORMAL+Fore.RED+str(strline))
 
+			# print("Setting other flags to False")
+			vzb = True
+			vyb = False
+			# Denne også for moro skyld
+			vxb = False
+		else:
+			vzb = False
+
+		# Test for element 1 (time)
 		try:
 			timy = time.strptime(line2[0],"%Y-%m-%dT%H:%M:%S.%f")
 			vxb = True
@@ -244,7 +118,8 @@ def verifylines(lines):
 			# print("Typecasting to timestruct failed")
 			# print("i er "+str(i))
 			# print(line2[0])
-			print("Typecasting to "+Style.BRIGHT+"timestruct "+Style.NORMAL+"failed at "+Style.BRIGHT+str(i)+Style.DIM+": "+Style.BRIGHT+Fore.RED+str(line2[0]))
+			errors = errors+1
+			print("["+str(errors)+"] "+"Typecasting to timestruct failed at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Style.BRIGHT+Fore.RED+str(line2[0]))
 			vxb = False
 
 		if (vxb == True):
@@ -256,21 +131,17 @@ def verifylines(lines):
 				vyb = True
 			except:
 				vyb = False
+		
 			
-		# Catching errors
+		# Catching and printing out errors
+		# X shows errors right away; Here we show y errors (if needed)
 		if (vyb is False):
-			try:
-				txtline = line2[1]
-				print("Typecasting to "+Style.BRIGHT+"float"+Style.NORMAL+" failed at "+Style.BRIGHT+str(i)+Style.DIM+": "+Style.BRIGHT+Fore.RED+str(txtline))
-			except:
-				# Never happens, but in case, we have 1 try/except for 1 loop, not both. TODO
-				print("Typecasting to float failed at "+Style.BRIGHT+str(i)+Style.DIM+" but cannot show the error"), exit()
-				# print("Typecasting to float failed at "+Style.BRIGHT+str(i)+Fore.RED+str(txtline))
-				# print("i er "+str(i))
-				# print(line2[1])
+			txtline = line2[1]
+			errors = errors+1
+			print("["+str(errors)+"] "+"Typecasting to float failed at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Fore.RED+str(txtline))
 
-
-		if (vxb and vyb is True):
+		# All successful, adding to list
+		if (vxb is True and vyb is True and vzb is False):
 			# print("Both are true")
 			# print("vx "+str(vx))
 			reallist.append(timy)
@@ -421,81 +292,42 @@ def main():
 		m = j%2
 		# print(m)
 		
+		# Alltid forvirra over hva som er x og y, partall og oddetall
 		if (m == 1):
-			y.append(reallist[i])
-		if (m == 0):
 			x.append(reallist[i])
+		if (m == 0):
+			y.append(reallist[i])
 
+	print("x and y created")
+	# print(len(y))
+	# print(len(x))
+	
 	# Assert the list is correct size
 	assert len(y) == len(x), "Len av ylist and x are not the same"
 
 	# Etter vi har fått y til å bli float, så finner vi nå max
 	
-	ymax = maxy(y)
+	ymax = max(y)
 	print(ymax)
 	print(type(ymax))
-	print("Exit, etter maxy")
-	exit()
-	
-	
-	
-	# Renske x
 
-	xbefore = len(x)
+	assert isinstance(ymax, float), "Max of y is not a float?"
 	
-	# x er rådata
-	# xlist er timestruct
-	# xlist2 er datetime
-	# def xlean lager xlist
-	
-	# print("Problemet er y")
-	# print("len av y før: "+str(len(y)))
-	# print("len av x før: "+str(len(x)))
-	# print("len av xlistfør: 0")
-	
-	x,xlist = xclean(x,y)
-	
-	# print("len av y etter: "+str(len(y)))
-	# print("len av x etter: "+str(len(x)))
-	# print("len av xlist etter: "+str(len(xlist)))
-	
-	print("Returned to me from clean: x and xlist: "+str(len(x))+" "+str(len(xlist)))
-	print("Whereas y is: "+str(len(y)))
-	
-	xafter = len(x)
-	xdiff = xbefore-xafter
-	print("Slettet "+Style.BRIGHT+str(xdiff)+Style.NORMAL+" linjer fra liste x")
-	
-	# Merk at xclean lagde liste xlist
-	print("Xlist is now: "+str(len(xlist)))
-	
-	# assert (len(y) == len(xlist)),"y er ulik xlist?"
-	
-	while (len(y) > len(xlist)):
-		del y[0]
-		print("Popped item from y list")
-	
-	# Lage loop som konverterer. Riktig format er: %Y-%m-%dT%H:%M:%S.%f
-
-	print("X list should be clean and ready to go!")
-
 	# Deretter fra time_struck til datetime
 	xlist2 = []
-	# d finnes, setter den til None	
+	# d brukt tidligere, setter den til None	
 	d = None
 
-	for i in range(0, len(xlist)):
+	for i in range(0, len(x)):
 		# 09.05.2018: datetime.datetime?
-		dt = datetime.datetime.fromtimestamp(mktime(xlist[i]))
+		dt = datetime.datetime.fromtimestamp(mktime(x[i]))
 		xlist2.append(dt)
 		# print("dt: "+str(dt)+" i: "+str(i))
 
+	print("xlist2 okay?")
+	# print(xlist2)
+		
 	# Selve plotte-kommandoen
-	
-	print("y: "+str(len(y)))
-	print("x: "+str(len(x)))
-	print("xlist: "+str(len(xlist)))
-	print("xlist2: "+str(len(xlist2)))
 
 	plt.grid(True)
 	plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
@@ -504,51 +336,6 @@ def main():
 	# (Egentlig bare minimum)
 
 	# Problemer både min og max
-	ymin = min(y)
-	try:
-		float(ymin)
-	except:
-		print("could not convert")
-		indeks = y.index(ymin)
-		print("Index: "+str(indeks))
-		yi = y[indeks]
-		print("Innhold: "+yi)
-		
-		# Pop
-		del y[indeks]
-		del x[indeks]
-			
-	print("Ny ymin, ett forsøk")
-	ymin = min(y)
-	print(ymin)
-	
-	ymin = float(ymin)
-	if (type(ymin)) is not float: print("fortsatt feil, trenger å lage loop"),exit()
-	
-	# getmax forventer to lister
-	ymax = "textstring"
-	while (type(ymax) is not float):
-		print("Calling getmax")
-		ymax = getmax(y,x)
-		if (ymax is None): 
-			print("Break from loop, got None")
-			break
-		print("Return from getmax: "+str(ymax))
-	
-	# Secondary check
-	ymax2 = max(y)
-	print("Ymax2: "+str(ymax2)+" og type er : "+str(type(ymax2)))
-	while ("." not in ymax2):
-		print("Type: "+str(type(ymax2)))
-		indeks = y.index(ymax2)
-		print("desimal ikke funnet, popper ved index "+str(indeks)+" ymax2 var: "+str(ymax2))
-		del y[indeks]
-		ymax2 = max(y)
-		ymax = ymax2
-
-	print("Konverterer max til float er det all good?")
-	ymax = float(ymax)
-	print("Hjelper ikke å si at det er float her, må hente det fra lista direkte")
 	
 	if (ymax < 10): 
 		print("Jesus Crhist!")
@@ -557,7 +344,7 @@ def main():
 		ymax = max(y)
 		print("Ny ymax: "+str(ymax))
 	
-	print("Max av y: "+max(y))
+	print("Max av y: "+str(max(y)))
 	print("Max (from variable) av y: "+str(ymax))
 	
 	# Final check for datatype
