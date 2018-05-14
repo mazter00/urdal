@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.008 14.05.2018 03:03 (home): Added verifylines. Should replace xclean and yclean. Testing needed.
 v0.007 11.05.2018 (home): Installs matplotlib if not installed (import failed)
 v0.006 11.05.2018: Lots of tries to cleaning the y and x list
 v0.005 07.05.2018: Lagd en argv, "-plot"
@@ -31,7 +32,7 @@ from colorama import Fore, Back, Style
 init(autoreset=True)
 import sys
 import time
-import os
+
 
 # OPTIONS
 
@@ -45,7 +46,7 @@ def fikslinje():
 		f = ff.read()
 		
 		s = f.split()
-		print("0: "+str(s[0])+" 1: "+str(s[1]))
+		print("[fikslinje] 0: "+str(s[0])+" 1: "+str(s[1]))
 		# TODO: Kode ikke ferdig.
 		# Dette er et ikke-problem, men en bug som kan komme opp senere
 		# exit(10)
@@ -203,21 +204,99 @@ def xclean(x,y):
 			pop(x,y,i)
 
 	return(x,xlist)
+
+def verifylines(lines):
+	""" Verfies by typecasting x and then y at the line before putting in into new list """
+	import time
+	
+	lenx = len(lines)
+	print("[VerifyLines] len er: "+str(lenx))
+
+	# Verified x
+	vx = []
+	vy = []
+	
+	line2 = []
+
+	# I have the option to create x and y right now
+	reallist = []
+	
+	timy = None
+	floaty = None
+	
+
+	for i in range(0, len(lines)):
+		
+		# print("For loop start")
+		line2 = lines[i].split()
+		# print(line2)
+		# print(line2[0])
+		# print(line2[1])
+
+		try:
+			timy = time.strptime(line2[0],"%Y-%m-%dT%H:%M:%S.%f")
+			vxb = True
+		except:
+			print("Typecasting to timestruct failed")
+			print("i er "+str(i))
+			print(line2[0])
+			vxb = False
+
+		if (vxb == True):
+			# print("x passed, tester y")
+			# print(vx)
+			
+			try:
+				floaty = float(line2[1])
+				vyb = True
+			except:
+				print("Typecasting to float failed")
+				print("i er "+str(i))
+				print(line2[1])
+
+				vyb = False
+			
+		if (vxb and vyb is True):
+			# print("Both are true")
+			# print("vx "+str(vx))
+			reallist.append(timy)
+			
+			# print("vy "+str(vy))
+			reallist.append(floaty)
+
+
+	print("Verifylines ended")
+	print("Length is now: " +str(len(reallist)))
+	
+	print("How many did we remove?")
+	return(reallist)
 			
 def main():
 	# Alt som er i main kjøres, IKKE ved import
+	
+	from colorama import init
+	init()
+	from colorama import Fore, Back, Style
+	init(autoreset=True)
 
-	# 07.05.2018: For bruk av x-aksen
+	import os
 	try:
 		import matplotlib.dates as mdates
 	except:
-		os.system("pip3 install matplotlib")
+		print(Style.BRIGHT+"import matplotlib failes, will download and install it using pip")
+		
+		os.system("sudo aptitude install libatlas-base-dev")
+		os.system("sudo apt install python3-pip")
+		os.system("sudo pip3 install --upgrade matplotlib")
+		# os.system("pip3 install matplotlib")
 
 	# 08.05.2018: For "jet" colormap
 	# 09.05.2018: Får ikke til colormap, prøver igjen senere
 	# from matplotlib import cm
 
 	argplot = False
+
+
 
 	if (len(sys.argv) > 1):
 		if (sys.argv[1] == "-plot"):
@@ -253,7 +332,7 @@ def main():
 	print(Style.BRIGHT+"Bytes: "+Style.NORMAL+str(fs))
 	if (fs == 0): print("0 bytes, exit"), exit(405)
 
-	fikslinje()
+	# fikslinje()
 
 	# Egne funksjoner
 	from merge import today,extractdate,checkfolder
@@ -324,9 +403,33 @@ def main():
 	# Assert the list is correct size
 	assert len(y) == len(x), "Len av ylist and x are not the same"
 
-	# 12.04.2018: Jeg finner "NED" randomt... Lager loop for å unngå.
-	# 07.05.2018: Dette er en feil ifra kildefilen. Kanskje lage en sjekk i sread.py? [TODO]
-	# 08.05.2018: Vet du hva, vi looper hele lista vi...
+	reallist = verifylines(lines)
+	print(len(reallist))
+	# print(reallist)
+	
+	# Quickly seperate the list into x and y
+	x = []
+	y = []
+	
+	print("Seperating list")
+	
+	for i in range(0,len(reallist)):
+		# print(reallist[i])
+		
+		j = i+1
+		# 1%2=1=x
+		# 2%2=0=y
+		# 3%2=1=x
+		
+		m = j%2
+		# print(m)
+		
+		if (m == 1):
+			y.append(reallist[i])
+		if (m == 0):
+			x.append(reallist[i])
+	
+	assert len(y) == len(x), "Len av ylist and x are not the same"
 
 	ybefore = len(y)
 
