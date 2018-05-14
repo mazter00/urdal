@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.009 14.05.2018 13:49 No longer tests [1] for existense, it will be caught in verifylines
 v0.008 14.05.2018 03:03 (home): Added verifylines. Should replace xclean and yclean. Testing needed.
 v0.007 11.05.2018 (home): Installs matplotlib if not installed (import failed)
 v0.006 11.05.2018: Lots of tries to cleaning the y and x list
@@ -250,9 +251,9 @@ def verifylines(lines):
 				floaty = float(line2[1])
 				vyb = True
 			except:
-				print("Typecasting to float failed")
-				print("i er "+str(i))
-				print(line2[1])
+				print("Typecasting to float failed at "+Style.BRIGHT+str(i)+Fore.RED+str(line2[i]))
+				# print("i er "+str(i))
+				# print(line2[1])
 
 				vyb = False
 			
@@ -366,47 +367,24 @@ def main():
 		print("Linjer funnet: "+Style.BRIGHT+str(linjer))
 	
 	# 07.05.2018: Leser nå både x og y (tid og value)
-			
-	y = []
-	x = []
 	
 	feil = 0
-	c = 0
-	for i in range(0,len(lines)):
-		x.append(lines[c].split()[0])
-		c = c+1
-	
-	tag = False
-	c = 0
-	for i in range(0,len(lines)):
-		a = lines[c].split()
-		
-		try:
-			b = a[1]
-		except:
-			feil = feil+1
-			# print("Feil i item nummer: "+str(c))
-			
-			# Fjerner tilsvarende item i forrige liste som er x
-			del x[c]
-			
-			# print(a)
-			tag = True
-		
-		if tag == False: y.append(b)
-		if tag == True: tag = False
-		c = c+1
 
-	print("Antall feil funnet in liste-laging: "+Style.BRIGHT+str(feil))
+	linesba = len(lines)
+	reallist = verifylines(lines)
+	print(len(reallist))
+	# print(reallist)
+	
+	linesba2 = len(lines)
+	
 	print("Len av y: "+str(len(y))+" og len av x: "+str(len(x)))
 
 	# Assert the list is correct size
 	assert len(y) == len(x), "Len av ylist and x are not the same"
 
-	reallist = verifylines(lines)
-	print(len(reallist))
-	# print(reallist)
-	
+	feil = linesba2-linesba
+	print("Antall linjer luket ut: "+Style.BRIGHT+str(feil))
+
 	# Quickly seperate the list into x and y
 	x = []
 	y = []
@@ -433,7 +411,8 @@ def main():
 
 	ybefore = len(y)
 
-	y = yclean(y,x,lines)
+	# No longer uses yclean
+	# y = yclean(y,x,lines)
 
 	yafter = len(y)
 	ydiff = ybefore-yafter
