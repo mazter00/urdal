@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+V0.012 15.05.2018 Error output looks good, even calculates correct lines removed and shows correct error
 v0.011 14.05.2018 16:38 It now plots again! (four+ days). Problem with y minimum; it's wrong
 v0.010 14.05.2018 15:17 Happy with print output for verifylines
 v0.009 14.05.2018 13:49 No longer tests [1] for existense, it will be caught in verifylines
@@ -70,6 +71,8 @@ def removedecimal():
 
 def verifylines(lines):
 	""" Verfies by typecasting x and then y at the line before putting in into new list """
+	import math
+	
 	import time
 	tsstart = time.monotonic()
 	
@@ -83,11 +86,18 @@ def verifylines(lines):
 	
 	timy = None
 	floaty = None
+	floatyba = None
+	
+	# Error already printed?
+	p = False
 	
 	errors = 0
 	
 
 	for i in range(0, len(lines)):
+		
+		# print statement
+		p = False
 		
 		# print("For loop start")
 		line2 = lines[i].split()
@@ -101,12 +111,11 @@ def verifylines(lines):
 			strline = ' '.join(line2[2:])
 			errors = errors+1
 			print("["+str(errors)+"] "+"Third element was present"+Style.BRIGHT+Fore.YELLOW+": "+Style.NORMAL+Fore.RED+str(strline))
-
+			p = True
+			continue
+			
 			# print("Setting other flags to False")
 			vzb = True
-			vyb = False
-			# Denne også for moro skyld
-			vxb = False
 		else:
 			vzb = False
 
@@ -121,6 +130,8 @@ def verifylines(lines):
 			errors = errors+1
 			print("["+str(errors)+"] "+"Typecasting to timestruct failed at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Style.BRIGHT+Fore.RED+str(line2[0]))
 			vxb = False
+			p = True
+			continue
 
 		if (vxb == True):
 			# print("x passed, tester y")
@@ -128,10 +139,23 @@ def verifylines(lines):
 			
 			try:
 				floaty = float(line2[1])
+				# if (floaty > 1000): print("line2: "+str(line2)), exit()
 				vyb = True
 			except:
 				vyb = False
 		
+		# Check if y is okay
+		if (vyb is True and floatyba is None): floatyba = floaty
+		
+		if (vyb is True):
+			d = floaty-floatyba
+			fabs = math.fabs(d)
+			if (fabs >= 9): 
+				errors = errors+1
+				strline = "Diff: "+str(fabs)+" C: "+str(floaty)+" BA: "+str(floatyba)
+				print("["+str(errors)+"] "+"Float distance too high at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Style.RESET_ALL+str(strline))
+				p = True
+				continue
 			
 		# Catching and printing out errors
 		# X shows errors right away; Here we show y errors (if needed)
@@ -139,6 +163,8 @@ def verifylines(lines):
 			txtline = line2[1]
 			errors = errors+1
 			print("["+str(errors)+"] "+"Typecasting to float failed at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Fore.RED+str(txtline))
+			p = True
+			continue
 
 		# All successful, adding to list
 		if (vxb is True and vyb is True and vzb is False):
@@ -148,6 +174,13 @@ def verifylines(lines):
 			
 			# print("vy "+str(vy))
 			reallist.append(floaty)
+		else:
+			if (p == False):
+				errors = errors+1
+				strline = ' '.join(line2[:])
+				# print("["+str(errors)+"] "+"Unknown error/invalid input at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Fore.RED+str(strline))
+				print("["+str(errors)+"] "+"Unknown error/invalid input at "+str(i))
+			
 
 
 
