@@ -110,7 +110,8 @@ def verifylines(lines):
 		if len(line2) > 2: 
 			strline = ' '.join(line2[2:])
 			errors = errors+1
-			print("["+str(errors)+"] "+"Third element was present"+Style.BRIGHT+Fore.YELLOW+": "+Style.NORMAL+Fore.RED+str(strline))
+			pre = str("["+str(errors)+"] ["+str(i)+"] ")
+			print(pre+"Third element was present"+Style.BRIGHT+Fore.YELLOW+": "+Style.DIM+Fore.RESET+str(strline))
 			p = True
 			continue
 			
@@ -128,7 +129,8 @@ def verifylines(lines):
 			# print("i er "+str(i))
 			# print(line2[0])
 			errors = errors+1
-			print("["+str(errors)+"] "+"Typecasting to timestruct failed at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Style.BRIGHT+Fore.RED+str(line2[0]))
+			pre = str("["+str(errors)+"] ["+str(i)+"] ")
+			print(pre+"["+str(errors)+"] "+"Typecasting to timestruct "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Style.NORMAL+Fore.WHITE+str(line2[0]))
 			vxb = False
 			p = True
 			continue
@@ -235,18 +237,38 @@ def main():
 
 	argplot = False
 
-
+	wtdiff = 0
 
 	if (len(sys.argv) > 1):
-		if (sys.argv[1] == "-plot"):
+		
+		# argv list
+		al = sys.argv[:]
+		del al[0]
+		print(al)
+				
+		if ("-plot" in al):
 			print(Style.BRIGHT+Fore.CYAN+"Plot argument found; will show plot at the end")
 			drawplot = True
 			argplot = True
+			del al[0]
+		if ("-time" in al):
+			print("-time found in al, checking for argument")
 			
+			# Find in list
+			ali = al.index("-time")
+			ali1 = ali+1
+			ali1txt = al[ali1]
+			print("ali: "+str(ali))
+			print("ali txt: "+str(ali1txt))
+			print("Assume this is in hours")
+			
+			# Wanted time difference
+			wtdiff = ali1txt
 		else:
+			print("End of argv")
 			# Kanskje for "-ftp" ved senere anledning?
 			print("Sys.argv 1: "+str(sys.argv[1]))
-
+		
 
 	kuttdesimaler = False
 
@@ -272,9 +294,6 @@ def main():
 	if (fs == 0): print("0 bytes, exit"), exit(405)
 
 	# fikslinje()
-
-	# Egne funksjoner
-	from merge import today,extractdate,checkfolder
 	
 	if kuttdesimaler is True:
 		removedecimal()
@@ -287,6 +306,76 @@ def main():
 
 	# 02.05.2018: Alltid importere etter tkagg
 	import matplotlib.pyplot as plt
+
+	# --- Kode for merging ---
+	
+	# Egne funksjoner
+	from merge import today,extractdate,checkfolder
+	
+	from datetime import date,datetime
+	
+	if (wtdiff == 0):
+		print("Wanted time difference not set; setting it to 24 hours")
+		wtdiff = 24
+
+	# TODO: Unødvendig å åpne denne mange ganger
+	with open('temp.log',"r") as f:
+		lines = f.readlines()
+		
+		# Get newest date
+		
+		linje = lines[-1]
+		linje = linje.split()[0]
+		t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+		# print("Type av t: "+str(type(t)))
+		
+		# Loop
+		i = -1
+		c = 0
+		xlen = len(lines)-2
+		
+		print("type if wtdiff:"+str(type(wtdiff)))
+		
+		wtdiffs = float(int(wtdiff))
+		
+		print("type if wtdiffs:"+str(type(wtdiffs)))
+		
+		print("str diff: "+str(wtdiff))
+		print("str diffs: "+str(wtdiffs))
+		
+		# Wanted time difference in seconds
+		wtdiffs = wtdiffs*60*60
+		
+		print("Wanted time difference in seconds is: "+str(wtdiffs))
+		
+		while (c < xlen):
+			i = i-1
+			linje = lines[i]
+			linje = linje.split()[0]
+			try:
+				t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+			except:
+				print("Error in the line: "+str(linje))
+				continue
+				
+			# print("type i loop (t2): "+str(type(t2)))
+			# mk = time.mktime(t2)
+			# print(mk)
+			tdiff = t-t2
+			# print("Type av tdiff: "+str(type(tdiff)))
+			# print("tdiff: "+str(tdiff))
+			
+			h = float(tdiff.total_seconds())
+			# print(h)
+			
+			print("h: "+str(h)+" wtdiff: "+str(wtdiffs))
+			
+			if (h >= wtdiffs):
+				print("We've found what we were looking for! :D")
+				break
+				
+			# print(t)
+			# print("Type: "+str(type(t)))
 
 	# --- KODE FOR PLOTTINGz --- 
 
@@ -341,14 +430,14 @@ def main():
 	# Etter vi har fått y til å bli float, så finner vi nå max
 	
 	ymax = max(y)
-	print(ymax)
-	print(type(ymax))
-
 	assert isinstance(ymax, float), "Max of y is not a float?"
 	
+	ymin = min(y)
+	assert isinstance(ymin, float), "Min of y is not a float?"
+
 	# Deretter fra time_struck til datetime
 	xlist2 = []
-	# d brukt tidligere, setter den til None	
+	# d kanskje brukt tidligere, setter den til None	
 	d = None
 
 	for i in range(0, len(x)):
@@ -357,49 +446,20 @@ def main():
 		xlist2.append(dt)
 		# print("dt: "+str(dt)+" i: "+str(i))
 
-	print("xlist2 okay?")
-	# print(xlist2)
 		
 	# Selve plotte-kommandoen
 
+	print("matplotlib is now plotting, waiting...")
+
 	plt.grid(True)
-	plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
+	# plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
+	plt.plot(xlist2,y,'k-',linewidth=1, markersize=1)
 
 	# Finne en sensible min og max for å vise i matplotlib ETTER plot
 	# (Egentlig bare minimum)
 
-	# Problemer både min og max
 	
-	if (ymax < 10): 
-		print("Jesus Crhist!")
-		indeks = y.index(max(y))
-		del y[indeks]
-		ymax = max(y)
-		print("Ny ymax: "+str(ymax))
-	
-	print("Max av y: "+str(max(y)))
-	print("Max (from variable) av y: "+str(ymax))
-	
-	# Final check for datatype
-	while (type(ymax) is not float):
-		print("Wrong datatype for ymax")
-		indeks = y.index(max(y))
-		print(indeks)
-		ytemp = y[indeks]
-		print(ytemp)
-		del y[indeks]
-		try:
-			ymax = float(max(y))
-		except:
-			ymax = "jibberish"
-			print("Could not set a new ymax as float")
-		
-
-	if (type(ymin) is not float):
-		print("Wrong datatype for ymin, exit")
-		exit()
-	
-	# After umput for mr. JO
+	# After input for mr. JO
 	if (ymin > 20): 
 		print("Setting own limit on y-axis, lower, to 20")
 		plt.gca().set_ylim(bottom=20)
