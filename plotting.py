@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.013 22.05.2018 Now generates graphs at requested range in hurs without hickup
 V0.012 15.05.2018 Error output looks good, even calculates correct lines removed and shows correct error
 v0.011 14.05.2018 16:38 It now plots again! (four+ days). Problem with y minimum; it's wrong
 v0.010 14.05.2018 15:17 Happy with print output for verifylines
@@ -213,32 +214,35 @@ def verifylines(lines):
 	return(reallist)
 			
 def binarys(lines,t,wtdiff,wtdiffs):
-	print(Style.BRIGHT+"BinarySearch] "+Style.NORMAL+"starting...")
+	""" Binary Search """
+	
+	print(Style.BRIGHT+"[BinarySearch] "+Style.NORMAL+"starting...")
 	from datetime import date,datetime
 	lista = lines
 	
-	""" Binary Search """
 	print("Latest timestamp: "+str(t))
 	print("Wanted difference in hours: "+str(wtdiff))
 	print("Wanted difference in seconds: "+str(wtdiffs))
 
-	x = len(lista)-1
+	x = len(lista)
+	print("Number of lines: "+str(x))
 	
-	# First try
+	# Først sjekke om første linja (eldste) i temp.log dekker søket
+	# Det er for å svare på spørsmålet om man må merge datofiler...
 	
-	i = int(x/2)
-	print("Binary search line is: "+str(i))
+	# False = Dekker ikke, må merge --- True, Dekker behovet, behøver ikke å merge
+	mergeb = False
+	i = 1
+	print("Binary search line is (oldest): "+str(i))
 	linje = lista[i]
 	linje = linje.split()[0]
 
 	try:
 		t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
 	except:
-		print("Error in the line: "+str(linje))
-		exit("bys failed, corrupt line")
+		print("Error in the line (oldest): "+str(linje))
+		exit("bys failed, corrupt line, oldest")
 
-	# Sjekk om første forsøk treffer
-	
 	diff = t-t2
 	h = float(diff.total_seconds())
 	print(h)
@@ -246,27 +250,81 @@ def binarys(lines,t,wtdiff,wtdiffs):
 	print("h: "+str(h)+" wtdiff: "+str(wtdiffs))
 	
 	if (h >= wtdiffs):
-		print("We've found what we were looking for! :D")
-		# break
-		print("prematurely breaks the functions, since the code is not complete")
-		return False
+		print(Fore.GREEN+Style.BRIGHT+"No need to merge, we have all we need")
+		mergeb = False
+	else:
+		mergeb = True
 
+	if (mergeb is True):
+		print("We need to merge files to fulfill the range-reqeust. Aborting due to incomplete code")
+		exit("Need to merge, incomplete code")
+
+	# Alt ok så langt. Enten har temp.log rangen inne, eller så har vi merget filer. TODO: Merge filer ved behov
+
+	# First try
+	firstb = False
 	
-
-	i = i-1
-	linje = lines[i]
-	linje = linje.split()[0]
-	try:
-		t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
-	except:
-		print("Error in the line: "+str(linje))
-		# TODO, lage loop som catcher denne feilen
-		print("INFO: Line is corrupted, could not make time out of it")
-		# continue
+	# Start of loop?
 	
-	print("No more code...")
+	tries = 0
+	oldh = h
+	print("oldh (maximum diff): "+str(oldh))
+	
+	# Setter i her før loopen. Loopen har ansvar for nye i'er
+	i = int(x/2)
+	minL = 0
+	maxL = x
+		
+	for something in range(x):
+		tries = tries+1
+
+		print("Try: "+Style.BRIGHT+str(tries)+Style.NORMAL+": Binary search line is: "+str(i)+"/"+str(x))
+		linje = lista[i]
+		linje = linje.split()[0]
+
+		try:
+			t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+		except:
+			print("Error in the line: "+str(linje))
+			# "bys"?
+			exit("bys failed, corrupt line")
+
+		diff = t-t2
+		h = float(diff.total_seconds())
+		# print(h)
+		
+		# Linediff
+		ld = maxL-minL
+		
+		print("h: "+str(h)+" wtdiff: "+str(wtdiffs)+" Min: "+str(minL)+" Max: "+str(maxL)+" Linediff: "+str(ld))
+		
+		if (h > wtdiffs):
+			print("Diff too high, need higher linenumber")
+
+			print("Current i: "+str(i))
+			if (minL < i): 
+				minL = i
+			else:
+				print("Error in setting new minimum line, HOWEVER, I think we got it")
+				return True,i
+				
+			i = int((minL+maxL)/2)
+			print("New i: "+str(i))
+		elif (h < wtdiffs):
+			print("Diff too low, need lower linenumber")
+
+			print("Current i: "+str(i))
+			maxL = i
+			i = int((minL+maxL)/2)
+			print("New i: "+str(i))
+		else:
+			print("Diff is the same?!?")
+			exit()
+	
+	exit("Fallen off loop?")
 
 
+	# Autoreturn False until code is working
 	return False
 
 def main():
@@ -371,7 +429,8 @@ def main():
 	from merge import today,extractdate,checkfolder
 	
 	# Jeg vet at jeg også importerer det samme i binarys
-	from datetime import date,datetime
+	# Her i main så importerer vi datetime "direkt"
+	from datetime import datetime
 	
 	if (wtdiff == 0):
 		print("Wanted time difference not set; setting it to 24 hours")
@@ -393,55 +452,24 @@ def main():
 	linje = linje.split()[0]
 	t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
 
-	bs = binarys(lines,t,wtdiff,wtdiffs)
-	if bs is not True:
-		exit("Binary Search failed")
+	# Remember, verifylines comes *after* this, noise could be a problem.
+	# However, we are only working against date, and not the pair of date and value.
+	
+	# Binary Search Boolean, Binary Search Line Number Returned
+	bsb,bsl = binarys(lines,t,wtdiff,wtdiffs)
+	if bsb is not True:
+		exit("[Main] Binary Search failed")
+	else:
+		print("Binary Search Succeded, Line Number Returned: "+str(bsl))
 		
-	# Loop
-	i = -1
-	c = 0
-	xlen = len(lines)-2
-
-	while (c < xlen):
-		i = i-1
-		linje = lines[i]
-		linje = linje.split()[0]
-		try:
-			t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
-		except:
-			print("Error in the line: "+str(linje))
-			# TODO, lage loop som catcher denne feilen
-			print("INFO: Line is corrupted, could not make time out of it")
-			continue
-			
-			
-		# print("type i loop (t2): "+str(type(t2)))
-		# mk = time.mktime(t2)
-		# print(mk)
-		tdiff = t-t2
-		# print("Type av tdiff: "+str(type(tdiff)))
-		# print("tdiff: "+str(tdiff))
-		
-		h = float(tdiff.total_seconds())
-		# print(h)
-		
-		print("h: "+str(h)+" wtdiff: "+str(wtdiffs))
-		
-		if (h >= wtdiffs):
-			print("We've found what we were looking for! :D")
-			break
-			
-		# print(t)
-		# print("Type: "+str(type(t)))
+	# Loop for å lage liste out av en selected range fra temp.log ([lines])
+	print("Lines exists, len: "+str(len(lines)))
+	
+	lines = lines[bsl:]
+	print("New Lines, len: "+str(len(lines)))
+	
 
 	# --- KODE FOR PLOTTINGz --- 
-
-	with open('temp.log',"r") as f:
-		lines = f.readlines()
-		lines2 = lines
-	
-	# print(lines)
-	# exit()
 	
 	linjer = len(lines)
 	if (linjer == 0): 
@@ -499,7 +527,8 @@ def main():
 
 	for i in range(0, len(x)):
 		# 09.05.2018: datetime.datetime?
-		dt = datetime.datetime.fromtimestamp(mktime(x[i]))
+		# 22.05.2018: *sukk* date?
+		dt = datetime.fromtimestamp(mktime(x[i]))
 		xlist2.append(dt)
 		# print("dt: "+str(dt)+" i: "+str(i))
 
@@ -530,9 +559,13 @@ def main():
 	# 09.05.2018: Siden jeg flytta kode...
 	# Lager ny tittel
 
-	dato = datetime.datetime.now().strftime('%d.%m.%Y')
+	# 22.05.2018: Men nå kan jeg ikke "datetime.datetime." ?
+	dato = datetime.now().strftime('%d.%m.%Y')
 	print("Dato: "+str(dato))
-	plt.title(dato)
+	
+	ttxt = "Siste "
+	ttxt = ttxt+str(wtdiff)+" timer"
+	plt.title(dato+" ("+str(ttxt)+")")
 
 	# --- Legend eller Annontation ---
 
