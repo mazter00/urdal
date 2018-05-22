@@ -169,7 +169,7 @@ def main():
 	from plotting import today
 	from plotting import extractdate
 
-	print(Style.BRIGHT+"Merge "+version()+Style.NORMAL+" starting")
+	print(Style.BRIGHT+"Split "+version()+Style.NORMAL+" starting")
 
 	f = today()
 	if f is None: 

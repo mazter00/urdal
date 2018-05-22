@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-''' 
+"""
 Merges temp.log with the previous day
 ..and every day as wanted.
 Creates merge.log for plotting.py to work with
 
-merge.py has the responsibillity for date-cehcking
-'''
+merge.py (this) has the responsibillity for date-cehcking
+"""
 
 from colorama import init
 init()

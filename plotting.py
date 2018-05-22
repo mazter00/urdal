@@ -17,7 +17,7 @@ v0.002 20.03.2018: Fikse opp temp.log
 '''
 
 ''' TODO:
-14.05.2018 16:37: Fikse slik at y minimum ikke er 10 eller 20 ifra, plutselig droppes et helt tall
+* lots
 '''
 
 '''
@@ -29,7 +29,7 @@ Dette scriptet gjør følgende:
 Sjekker dagens dato i forhold til hva som er i temp.log
 - Hvis ukjent dato finnes, rensk ut denne til egen fil
 Lager to lister ut fra temp.log, x og y, konnverterer dette til riktig datatype
-.. og plotter alt sammen
+.. og plotter alt sammen etter bestemt tids-range i timer
 TODO: Ønsker å få skilt sjekking av temp.log til egen pythonfil.
 '''
 
