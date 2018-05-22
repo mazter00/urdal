@@ -212,6 +212,63 @@ def verifylines(lines):
 
 	return(reallist)
 			
+def binarys(lines,t,wtdiff,wtdiffs):
+	print(Style.BRIGHT+"BinarySearch] "+Style.NORMAL+"starting...")
+	from datetime import date,datetime
+	lista = lines
+	
+	""" Binary Search """
+	print("Latest timestamp: "+str(t))
+	print("Wanted difference in hours: "+str(wtdiff))
+	print("Wanted difference in seconds: "+str(wtdiffs))
+
+	x = len(lista)-1
+	
+	# First try
+	
+	i = int(x/2)
+	print("Binary search line is: "+str(i))
+	linje = lista[i]
+	linje = linje.split()[0]
+
+	try:
+		t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+	except:
+		print("Error in the line: "+str(linje))
+		exit("bys failed, corrupt line")
+
+	# Sjekk om første forsøk treffer
+	
+	diff = t-t2
+	h = float(diff.total_seconds())
+	print(h)
+	
+	print("h: "+str(h)+" wtdiff: "+str(wtdiffs))
+	
+	if (h >= wtdiffs):
+		print("We've found what we were looking for! :D")
+		# break
+		print("prematurely breaks the functions, since the code is not complete")
+		return False
+
+	
+
+	i = i-1
+	linje = lines[i]
+	linje = linje.split()[0]
+	try:
+		t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+	except:
+		print("Error in the line: "+str(linje))
+		# TODO, lage loop som catcher denne feilen
+		print("INFO: Line is corrupted, could not make time out of it")
+		# continue
+	
+	print("No more code...")
+
+
+	return False
+
 def main():
 	# Alt som er i main kjøres, IKKE ved import
 	
@@ -237,7 +294,8 @@ def main():
 
 	argplot = False
 
-	wtdiff = 0
+	wtdiff = int(0)
+	wtdiffs = int(0)
 
 	if (len(sys.argv) > 1):
 		
@@ -263,7 +321,7 @@ def main():
 			print("Assume this is in hours")
 			
 			# Wanted time difference
-			wtdiff = ali1txt
+			wtdiff = int(ali1txt)
 		else:
 			print("End of argv")
 			# Kanskje for "-ftp" ved senere anledning?
@@ -312,70 +370,69 @@ def main():
 	# Egne funksjoner
 	from merge import today,extractdate,checkfolder
 	
+	# Jeg vet at jeg også importerer det samme i binarys
 	from datetime import date,datetime
 	
 	if (wtdiff == 0):
 		print("Wanted time difference not set; setting it to 24 hours")
 		wtdiff = 24
 
-	# TODO: Unødvendig å åpne denne mange ganger
+	# Wanted time difference in seconds
+	wtdiffs = int(float(wtdiff)*60*60)
+	print("Wanted time difference in seconds is: "+str(wtdiffs))
+	# print(str(type(wtdiffs)))
+
+	# TODO: Unødvendig å åpne denne mange ganger (dette er første gang)
 	with open('temp.log',"r") as f:
 		lines = f.readlines()
 		
-		# Get newest date
+	# Get newest date (disregard "now", we are using the file)
+
+	# Prepare t for binarys
+	linje = lines[-1]
+	linje = linje.split()[0]
+	t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+
+	bs = binarys(lines,t,wtdiff,wtdiffs)
+	if bs is not True:
+		exit("Binary Search failed")
 		
-		linje = lines[-1]
+	# Loop
+	i = -1
+	c = 0
+	xlen = len(lines)-2
+
+	while (c < xlen):
+		i = i-1
+		linje = lines[i]
 		linje = linje.split()[0]
-		t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
-		# print("Type av t: "+str(type(t)))
-		
-		# Loop
-		i = -1
-		c = 0
-		xlen = len(lines)-2
-		
-		print("type if wtdiff:"+str(type(wtdiff)))
-		
-		wtdiffs = float(int(wtdiff))
-		
-		print("type if wtdiffs:"+str(type(wtdiffs)))
-		
-		print("str diff: "+str(wtdiff))
-		print("str diffs: "+str(wtdiffs))
-		
-		# Wanted time difference in seconds
-		wtdiffs = wtdiffs*60*60
-		
-		print("Wanted time difference in seconds is: "+str(wtdiffs))
-		
-		while (c < xlen):
-			i = i-1
-			linje = lines[i]
-			linje = linje.split()[0]
-			try:
-				t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
-			except:
-				print("Error in the line: "+str(linje))
-				continue
-				
-			# print("type i loop (t2): "+str(type(t2)))
-			# mk = time.mktime(t2)
-			# print(mk)
-			tdiff = t-t2
-			# print("Type av tdiff: "+str(type(tdiff)))
-			# print("tdiff: "+str(tdiff))
+		try:
+			t2 = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+		except:
+			print("Error in the line: "+str(linje))
+			# TODO, lage loop som catcher denne feilen
+			print("INFO: Line is corrupted, could not make time out of it")
+			continue
 			
-			h = float(tdiff.total_seconds())
-			# print(h)
 			
-			print("h: "+str(h)+" wtdiff: "+str(wtdiffs))
+		# print("type i loop (t2): "+str(type(t2)))
+		# mk = time.mktime(t2)
+		# print(mk)
+		tdiff = t-t2
+		# print("Type av tdiff: "+str(type(tdiff)))
+		# print("tdiff: "+str(tdiff))
+		
+		h = float(tdiff.total_seconds())
+		# print(h)
+		
+		print("h: "+str(h)+" wtdiff: "+str(wtdiffs))
+		
+		if (h >= wtdiffs):
+			print("We've found what we were looking for! :D")
+			break
 			
-			if (h >= wtdiffs):
-				print("We've found what we were looking for! :D")
-				break
-				
-			# print(t)
-			# print("Type: "+str(type(t)))
+		# print(t)
+		# print("Type: "+str(type(t)))
 
 	# --- KODE FOR PLOTTINGz --- 
 
