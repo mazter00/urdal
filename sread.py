@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.011 23.05.2018 Added more debugging. Enabled by default. Creates a some noise, though
 v0.010 22.05.2018 15:29 Added "blocking" debug, disabled by default. Was supposed to give a list of "blocked" temps...
 v0.009 22.05.2018 Tried to reduce some output
 v0.008 09.05.2018 - Now autosaves temp.log once per hour
@@ -46,6 +47,7 @@ tempfile = open('temp.log', 'a')
 tsplotting = 0
 tsftp = 0
 tsautosave = 0
+
 catchb = False
 blocked = None
 # Debug Outtemp? True/False
@@ -67,11 +69,20 @@ while True:
 	if b"Temperature" in a:
 		# print("Temperature found in string")
 		b = a.split(b'= ')
+		bl = len(b)
+		if (bl != 2):
+			print("len of b: "+str(bl))
+			print("Tror dette er garbled?")
+			print("a: "+str(a))
+			print("b: "+str(b))
+			pass
+		
 		# 09.04.2018: Det er Arduino's oppgave å oppgi ønsket antall desimaler
 		# 12.04.2018: Try a Try block
 		try:
 			temp = b[1]
 		except IndexError:
+			# Dette skjer aldri?
 			print("IndexError: A er: "+str(a))
 		
 		tempd = temp.decode('utf-8')
@@ -83,10 +94,9 @@ while True:
 			float(tempd)
 			tryb = True
 		except:
-			print(Style.BRIGHT+Fore.RED+"Typecasting to float failed, temperature may be invalid")
+			print(Style.BRIGHT+Fore.RED+"Typecasting to float failed, temperature may be invalid: "+str(a))
 			tryb = False
-			
-		
+	
 		d = datetime.now().isoformat()
 		
 		savediff = current-tsautosave
@@ -106,7 +116,18 @@ while True:
 			catchb = True
 		tempfile.flush()
 		# print(type(tempd))
+
+	s = a.split()
+	sl = len(s)
 		
+	j = ">"
+	# 3 = Temp, 16 = Outtemp, 6 = NED/OPP
+	if ((sl != 3) and (sl != 16) and (sl != 6)): 
+		for i in s:
+			j = j+" "+i.decode('utf-8')
+			# print(j)
+		print(j)
+		print(sl)
 		
 	# Se etter "outtemp"
 	if blokking is True:
