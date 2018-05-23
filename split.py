@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Merges temp.log with the previous day
-..and every day as wanted.
-Creates merge.log for plotting.py to work with
+SPLITS temp.log with the previous day, and only that day
+Moves that portio from merge.log to its own folder and file
 
-merge.py (this) has the responsibillity for date-cehcking
+split.py (this) has the responsibillity for date-cehcking
 """
 
 from colorama import init
@@ -14,6 +13,7 @@ init()
 from colorama import Fore, Back, Style
 init(autoreset=True)
 
+import os
 
 
 def version():
@@ -90,6 +90,9 @@ def extractdate(f):
 
 def checkfolder(firstdate):
 
+	# Ting er visst ikke globale...
+	cwd = os.getcwd()
+	
 	# year folder, month folder, "filename.log"
 	yf = cwd+"/"+firstdate[0]
 	ym = cwd+"/"+firstdate[0]+"/"+firstdate[1]
@@ -99,6 +102,8 @@ def checkfolder(firstdate):
 	print("ym: "+str(ym))
 	print("datefile: "+str(datefile))
 
+	exit("Arbitrary exit code")
+	
 	if not os.path.exists(yf):
 		os.makedirs(yf)
 		print("FOLDER "+str(yf)+" created!")

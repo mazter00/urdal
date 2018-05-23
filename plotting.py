@@ -350,6 +350,7 @@ def main():
 	# 09.05.2018: Får ikke til colormap, prøver igjen senere
 	# from matplotlib import cm
 
+	# Standard
 	argplot = False
 
 	wtdiff = int(0)
@@ -425,9 +426,6 @@ def main():
 
 	# --- Kode for merging ---
 	
-	# Egne funksjoner
-	from merge import today,extractdate,checkfolder
-	
 	# Jeg vet at jeg også importerer det samme i binarys
 	# Her i main så importerer vi datetime "direkt"
 	from datetime import datetime
@@ -447,11 +445,33 @@ def main():
 		
 	# Get newest date (disregard "now", we are using the file)
 
+	# Code for splitting temp.log into individual files
+	
+	first = lines[0]
+	first = first.split()[0]
+	firstd = first.split('T')[0]
+	print(firstd)
+	
 	# Prepare t for binarys
 	linje = lines[-1]
 	linje = linje.split()[0]
 	t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
-
+	lastd = linje.split('T')[0]
+	
+	# Egne funksjoner
+	from split import today,extractdate,checkfolder
+	
+	print("firstd vs lastd: "+str(firstd)+" "+str(lastd))
+	if (firstd != lastd):
+		# Split Temp Boolean
+		print(Style.BRIGHT+Fore.RED+"temp.log contains different dates, splits them off")
+		print("FirstD: "+str(firstd))
+		# First Date Liost
+		fdl = firstd.split('-')
+		print("fdl: "+str(fdl))
+		stb = checkfolder(firstd)
+		if stb != True: exit("Split Temp failed, or missing code")
+		
 	# Remember, verifylines comes *after* this, noise could be a problem.
 	# However, we are only working against date, and not the pair of date and value.
 	
