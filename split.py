@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+v0.002 24.05.2018 Now sucessfully splits a certain string in temp.log to its own file. Also removes noise!
+v0.001 Inital code, copied from merge.py
+'''
+
 """
 SPLITS temp.log with the previous day, and only that day
 Moves that portio from merge.log to its own folder and file
 
 split.py (this) has the responsibillity for date-cehcking
+"""
+"""
+def checkfolder CREATES files
 """
 
 from colorama import init
@@ -88,7 +96,54 @@ def extractdate(f):
 	cwd = os.getcwd()
 	print("Current Working Directory: "+str(cwd))
 
-def checkfolder(firstdate):
+def splittings(datefile,fds):
+	print("[Splittings] starts...")
+	print("[Splittings] Will split "+str(fds)+" in temp.log and put it into its own file")
+	
+	# Åpner destination først
+	dest = open(datefile,'w')
+	
+	# Åpner backup templog2.log
+	log2 = open("temp2.log",'w')
+	
+	# temp log file
+	count = 0
+	antall = 0
+	
+	fs = os.path.getsize("temp.log")
+	if (fs == 0): print("FATAL ERROR, 0 bytes!"), exit(666)
+
+
+	with open("temp.log") as telle:
+		for line in telle:
+			if fds in line:
+				antall += 1
+				
+	print("Splittings] We have "+str(antall)+" occurances of the requested date")
+		
+	with open("temp.log") as tlf:
+		for line in tlf:
+			count = count+1
+			if fds in line:
+				# print("datostring funnet - linje "+str(count))
+				dest.write(line)
+			else:
+				if (count < antall): print("Datostring ikke funnet - linje "+str(count))
+				if (len(line) > 30): log2.write(line)
+				else: 
+					print(Style.BRIGHT+Fore.RED+"Error, line not long enough! "+str(line).rstrip())
+					# exit("sjekk line length")
+				
+	fs2 = os.path.getsize("temp2.log")
+	if (fs2 == 0): print("FATAL ERROR, 0 bytes!"), exit(666)
+	os.rename("temp2.log","temp.log")
+	print("Rename succesful?")
+	print("Gikk fra "+str(fs)+" bytes til "+str(fs2)+" bytes!")
+	return(True)
+
+
+def checkfolder(firstdate,dagensdato):
+	# print("[CheckFolder]: "+str(firstdate)+" "+str(dagensdato))
 
 	# Ting er visst ikke globale...
 	cwd = os.getcwd()
@@ -98,12 +153,10 @@ def checkfolder(firstdate):
 	ym = cwd+"/"+firstdate[0]+"/"+firstdate[1]
 	datefile = ym+"/"+str(firstdate[2]+".log")
 
-	print("yf: "+str(yf))
-	print("ym: "+str(ym))
-	print("datefile: "+str(datefile))
+	print(Style.BRIGHT+"yf: "+Style.NORMAL+str(yf))
+	print(Style.BRIGHT+"ym: "+Style.NORMAL+str(ym))
+	print(Style.BRIGHT+"datefile: "+Style.NORMAL+str(datefile))
 
-	exit("Arbitrary exit code")
-	
 	if not os.path.exists(yf):
 		os.makedirs(yf)
 		print("FOLDER "+str(yf)+" created!")
@@ -116,56 +169,33 @@ def checkfolder(firstdate):
 		open(datefile,'x')
 		print("FILE "+str(datefile)+" created!")
 	string = firstdate[0]+"-"+firstdate[1]+"-"+firstdate[2]
-	return(datefile,string)
-
-	print("Sjekker for dagens dato")
-
-	dagensdatofile = checkfolder(dagensdato)[0]
-	dagensdatostring = checkfolder(dagensdato)[1]
-
-	print("Sjekker for øverste dato")
-
-	firstdatefile = checkfolder(firstdate)[0]
-	firstdatestring = checkfolder(firstdate)[1]
-
-	print("firstdatefile: "+str(firstdatefile))
-
-	# print strings
-	print("Dagens Dato String: "+str(dagensdatostring))
-	print("First Date String: "+str(firstdatestring))
+	
+	print("Datefile "+Style.BRIGHT+Fore.GREEN+"exists: "+Fore.WHITE+str(datefile))
+	
+	# 24.05.2018: Aner ikke hvorfor det er return her
+	# return(datefile,string)
 
 	# Hvis dagensdato og øverste dato er ulike, så må vi renske filer
+	# 24.05.2018: Som de er, siden funksjonen er ble kalt
+	return(datefile,True)
+	
 
-	if dagensdato != firstdate:
-		print(str(dagensdato)+" er ulik fra "+str(firstdate))
-		
-		print("Vi må flytte VELDIG mange linjer fra temp.log til "+str(firstdatefile))
-		
-		# Åpner destination først
-		dest = open(firstdatefile,'w')
-		
-		# Åpner backup templog2.log
-		log2 = open("temp2.log",'w')
-		
-		# temp log file
-		count = 0
-		
-		with open("temp.log") as tlf:
-			for line in tlf:
-				count = count+1
-				if firstdatestring in line:
-					print("datostring funnet - linje "+str(count))
-					dest.write(line)
-				else:
-					print("Datostring ikke funnet - linje "+str(count))
-					log2.write(line)
-					
-		fs2 = os.path.getsize("temp2.log")
-		# if (fs2 == 0): print("FATAL ERROR, 0 bytes!"), exit(666)
-		os.rename("temp2.log","temp.log")
-		print("Rename succesful?")
-		print("Gikk fra "+str(fs)+" bytes til "+str(fs2)+" bytes!")
+# Sometimes, it is more fun to write things twice
 
+def splittemp(firstd,lastd):
+	# print("Type recieved: "+str(type(firstd)))
+	assert(type(firstd) is list),"splittemp did not recieve type list (but maybe string)"
+	
+	datefile,b = checkfolder(firstd,lastd)
+	# First Date String
+	fds = '-'.join(firstd)
+	print(firstd,fds,datefile,b)
+	
+	result = splittings(datefile,fds)
+	print(result)
+	
+	# Return False until code is complete
+	return(False)
 
 from datetime import datetime
 
