@@ -41,7 +41,8 @@ def today():
 	return(f)
 
 def extractdate(f):
-
+	""" 24.05.2018: Tror ikke jeg bruker denne """
+	
 	year = None
 	month = None
 	day = None
@@ -195,7 +196,7 @@ def splittemp(firstd,lastd):
 	print(result)
 	
 	# Return False until code is complete
-	return(False)
+	return(result)
 
 from datetime import datetime
 
