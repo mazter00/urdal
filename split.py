@@ -143,7 +143,8 @@ def splittings(datefile,fds):
 	return(True)
 
 
-def checkfolder(firstdate,dagensdato):
+# No longer needs dagensdato in arguments, just firstdate
+def checkfolder(firstdate):
 	# print("[CheckFolder]: "+str(firstdate)+" "+str(dagensdato))
 
 	# Ting er visst ikke globale...
@@ -171,12 +172,12 @@ def checkfolder(firstdate,dagensdato):
 		print("FILE "+str(datefile)+" created!")
 	string = firstdate[0]+"-"+firstdate[1]+"-"+firstdate[2]
 	
-	print("Datefile "+Style.BRIGHT+Fore.GREEN+"exists: "+Fore.WHITE+str(datefile))
+	fs = os.path.getsize(datefile)
+	print("Datefile "+Style.BRIGHT+Fore.GREEN+"exists: "+Fore.WHITE+str(datefile)+" Size: "+str(fs))
 	
 	# 24.05.2018: Aner ikke hvorfor det er return her
 	# return(datefile,string)
 
-	# Hvis dagensdato og øverste dato er ulike, så må vi renske filer
 	# 24.05.2018: Som de er, siden funksjonen er ble kalt
 	return(datefile,True)
 	
@@ -195,7 +196,6 @@ def splittemp(firstd,lastd):
 	result = splittings(datefile,fds)
 	print(result)
 	
-	# Return False until code is complete
 	return(result)
 
 from datetime import datetime

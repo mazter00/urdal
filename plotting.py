@@ -257,6 +257,7 @@ def binarys(lines,t,wtdiff,wtdiffs):
 
 	if (mergeb is True):
 		print("We need to merge files to fulfill the range-reqeust. Aborting due to incomplete code")
+		return(False,mergeb)
 		exit("Need to merge, incomplete code")
 
 	# Alt ok så langt. Enten har temp.log rangen inne, eller så har vi merget filer. TODO: Merge filer ved behov
@@ -323,9 +324,42 @@ def binarys(lines,t,wtdiff,wtdiffs):
 	
 	exit("Fallen off loop?")
 
+def firstd():
+	with open('temp.log',"r") as f:
+		lines = f.readlines()
+		
+	# Get newest date (disregard "now", we are using the file)
 
-	# Autoreturn False until code is working
-	return False
+	# Code for splitting temp.log into individual files
+	
+	first = lines[0]
+	first = first.split()[0]
+	
+	# Should be something like "2018-05-10T00:00:00.561624"
+	
+	print(first)
+	print(len(first))
+	
+	if len(first) != 26:
+		# Noise in first line of temp.log, let's remove it and re-write temp.log
+		print(Style.BRIGHT+Fore.RED+"[Error] Noise found in line 1 "+Fore.WHITE+str(first))
+		
+		with open("temp.log","w") as fixfile:
+			fixedlines = lines[1:]
+			fixedstr = ''.join(fixedlines)
+			fixfile.write(fixedstr)
+			# exit("sjekk temp.log")
+			
+			# TODO 24.05.2018: Flytte validering av linje en til egen funksjon, 
+			# men nå bare tar vi og lager nye variabler, spesifikt "first"
+			# 24.05.2018 15:18: Egen funksjon, yo
+			first = fixedlines[0]
+			first = first.split()[0]
+			
+	
+	firstd = first.split('T')[0]
+	print("firstd "+str(firstd))
+	return(firstd)
 
 def main():
 	# Alt som er i main kjøres, IKKE ved import
@@ -350,11 +384,13 @@ def main():
 	# 09.05.2018: Får ikke til colormap, prøver igjen senere
 	# from matplotlib import cm
 
-	# Standard
+	# Standard variabler
 	argplot = False
 
 	wtdiff = int(0)
 	wtdiffs = int(0)
+	
+	firstdato = ""
 
 	if (len(sys.argv) > 1):
 		
@@ -428,7 +464,7 @@ def main():
 	
 	# Jeg vet at jeg også importerer det samme i binarys
 	# Her i main så importerer vi datetime "direkt"
-	from datetime import datetime
+	from datetime import datetime,timedelta
 	
 	if (wtdiff == 0):
 		print("Wanted time difference not set; setting it to 24 hours")
@@ -440,6 +476,7 @@ def main():
 	# print(str(type(wtdiffs)))
 
 	# TODO: Unødvendig å åpne denne mange ganger (dette er første gang)
+	# 24.05.2018: lines er ganske universell nedover (tror jeg)
 	with open('temp.log',"r") as f:
 		lines = f.readlines()
 		
@@ -447,37 +484,96 @@ def main():
 
 	# Code for splitting temp.log into individual files
 	
-	first = lines[0]
-	first = first.split()[0]
-	firstd = first.split('T')[0]
-	print(firstd)
+	firstdato = firstd()
+	print("firstdato "+str(firstdato))
 	
-	# Prepare t for binarys
+	# Prepare t for binarys (se, her bruker vi lines)
 	linje = lines[-1]
 	linje = linje.split()[0]
 	t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
 	lastd = linje.split('T')[0]
 	
-	# Egne funksjoner
-	from split import today,extractdate,checkfolder
+	# Egne funksjoner, 25.05.2018: Trenger kanskje kun splittemp?
+	# from split import today,extractdate,checkfolder,splittemp
+	from split import checkfolder,splittemp
+	from merge import merge
 	
-	print("firstd vs lastd: "+str(firstd)+" "+str(lastd))
-	if (firstd != lastd):
+	# print("firstd vs lastd: "+str(firstd)+" "+str(lastd))
+	while (firstdato != lastd):
 		# Split Temp Boolean
-		print(Style.BRIGHT+Fore.RED+"temp.log contains different dates, splits them off")
-		print("FirstD: "+str(firstd))
-		# First Date Liost
-		fdl = firstd.split('-')
-		print("fdl: "+str(fdl))
-		stb = checkfolder(firstd)
-		if stb != True: exit("Split Temp failed, or missing code")
+		print(Fore.CYAN+"temp.log contains different dates, split "+Style.BRIGHT+str(firstdato)+Style.NORMAL+" from the log")
 		
+		# First Date List
+		fdl = firstdato.split('-')
+		print("fdl: "+Style.BRIGHT+str(fdl),end=' ')
+		
+		# Last Date List
+		ldl = lastd.split('-')
+		print("ldl: "+Style.BRIGHT+str(ldl))
+		
+		stb = splittemp(fdl,ldl)
+		if stb != True: exit("Split Temp failed...?")
+		
+		# Make new firstd so this while loop can work
+		firstdato = firstd()
+		print("While loop, firstdato: "+str(firstdato))
+	else:
+		print(Fore.GREEN+Style.BRIGHT+"temp.log inneholder kun dagens dato :)")
+		
+	# exit("Arbitrary exit loop after cleaning all dates except today")
+
 	# Remember, verifylines comes *after* this, noise could be a problem.
-	# However, we are only working against date, and not the pair of date and value.
+	# However, we are only working against date [x], and not the pair of date and value.
+	
+	# Beregne hvor mange og hvilke log-filer vi må merge...
+	
+	# t er fra siste linje i temp.log
+	print("t: "+str(t))
+	
+	# Total seconds in a day
+	tsd = 24*60*60
+	# print(tsd)
+	
+	# List of days to merge
+	ldm = []
+	
+	# Backup
+	wtdiffs2 = wtdiffs
+	while (wtdiffs2 >= tsd):
+		# Time Merge, t-Wanted_io_sekunder
+		tm = t-timedelta(seconds=wtdiffs2)
+		wtdiffs2 = wtdiffs2-tsd
+		
+		# Time, Merge, to String
+		tms = str(tm)
+		# print(tms)
+		
+		tms = tms.split(' ')[0]
+		# print(tms)
+		
+		tms = tms.split('-')
+		# print(tms)
+		ldm.append(tms)
+	
+	print("Her har vi en range?")
+	print(ldm)
+	
+	ldm2 = []
+	
+	for i in ldm: 
+		print(i)
+		ldm2.append(checkfolder(i)[0])
+		merge(i)
+	
+	print("ldm2: "+str(ldm2))
+	
 	
 	# Binary Search Boolean, Binary Search Line Number Returned
 	bsb,bsl = binarys(lines,t,wtdiff,wtdiffs)
-	if bsb is not True:
+	if bsb is False:
+		# Her finner vi ut at vi må merge
+		print("BSL: "+str(bsl))
+		# merger = 
 		exit("[Main] Binary Search failed")
 	else:
 		print("Binary Search Succeded, Line Number Returned: "+str(bsl))
