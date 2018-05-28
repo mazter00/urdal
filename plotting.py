@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
-v0.013 22.05.2018 Now generates graphs at requested range in hurs without hickup
-V0.012 15.05.2018 Error output looks good, even calculates correct lines removed and shows correct error
+v0.013 22.05.2018 Now generates graphs at requested range in hours without hickup
+V0.012 15.05.2018 Error output (verifylines) looks good, even calculates correct lines removed and shows correct error
 v0.011 14.05.2018 16:38 It now plots again! (four+ days). Problem with y minimum; it's wrong
 v0.010 14.05.2018 15:17 Happy with print output for verifylines
 v0.009 14.05.2018 13:49 No longer tests [1] for existense, it will be caught in verifylines
@@ -539,6 +539,7 @@ def main():
 	
 	# Backup
 	wtdiffs2 = wtdiffs
+	# Check for above 24 hours
 	while (wtdiffs2 >= tsd):
 		# Time Merge, t-Wanted_io_sekunder
 		tm = t-timedelta(seconds=wtdiffs2)
@@ -554,19 +555,53 @@ def main():
 		tms = tms.split('-')
 		# print(tms)
 		ldm.append(tms)
+		
+	# Then add last day, if needed
 	
-	print("Her har vi en range?")
+	print("Adding last day")
+	tm = t-timedelta(seconds=wtdiffs2)
+	
+	tms = str(tm)
+	print(tms)
+	
+	tms = tms.split(' ')[0]
+	print(tms)
+	
+	tms = tms.split('-')
+	print(tms)
+	print("Before we append...")
+	# exit("Sjekk tm")
+	
+	ldm.append(tms)
+
+
+	
+	
+	
+	print("Her har vi en range? (sjekk også for last-to-current-day)")
 	print(ldm)
+	
+	print("Len of ldm (if > 0, then merge was needed?): "+str(len(ldm)))
 	
 	ldm2 = []
 	
 	for i in ldm: 
 		print(i)
 		ldm2.append(checkfolder(i)[0])
-		merge(i)
-	
+			
 	print("ldm2: "+str(ldm2))
 	
+	m = merge(ldm2)
+	if (m is False): print("Merge is false, cannot continue..."), exit()
+	
+	print("Len of ldm2 (if > 0, then merge was needed?): "+str(len(ldm2)))
+	if (len(ldm2) > 0):
+		with open("merged.log",'r') as f:
+			lines = f.readlines()
+		print(Style.BRIGHT+Fore.CYAN+"Using merged.log instead of temp.log")
+	
+	
+	# "lines" kommer fra temp.log
 	
 	# Binary Search Boolean, Binary Search Line Number Returned
 	bsb,bsl = binarys(lines,t,wtdiff,wtdiffs)
@@ -638,7 +673,7 @@ def main():
 
 	# Deretter fra time_struck til datetime
 	xlist2 = []
-	# d kanskje brukt tidligere, setter den til None	
+	# d er kanskje brukt tidligere, setter den til None	
 	d = None
 
 	for i in range(0, len(x)):
@@ -655,13 +690,13 @@ def main():
 
 	plt.grid(True)
 	# plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
-	plt.plot(xlist2,y,'k-',linewidth=1, markersize=1)
+	plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
 
 	# Finne en sensible min og max for å vise i matplotlib ETTER plot
 	# (Egentlig bare minimum)
 
 	
-	# After input for mr. JO
+	# After input for mr. Jan O
 	if (ymin > 20): 
 		print("Setting own limit on y-axis, lower, to 20")
 		plt.gca().set_ylim(bottom=20)
@@ -671,9 +706,6 @@ def main():
 	plt.gca().xaxis.set_major_formatter(myFmt)
 
 	plt.ylabel('Temperatur')
-	
-	# 09.05.2018: Siden jeg flytta kode...
-	# Lager ny tittel
 
 	# 22.05.2018: Men nå kan jeg ikke "datetime.datetime." ?
 	dato = datetime.now().strftime('%d.%m.%Y')
@@ -687,12 +719,13 @@ def main():
 
 	plt.text(0,0,"Dagens høyeste temperatur",color='red',fontsize=30)
 
-	# Her finner vi ut av vi har 40 ylabels
+	# Sjekke og gjennomgå x-labels for erstatting av 00:00 til dato.
 	# 09.05.2018: Useful for senere, sjekke midnatt, rekord, minimum
-	locs, labs = plt.yticks()
-	# print("Locs: "+str(locs))
-	# print(labs)
+	locs, labs = plt.xticks()
+	print("Locs: "+str(locs))
+	print(labs)
 
+	# TODO: Navngi hvis en automatisert request ble mottatt
 	plt.savefig("temp/urdal/temp.png")
 
 	if drawplot is True:

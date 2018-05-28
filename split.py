@@ -188,7 +188,8 @@ def splittemp(firstd,lastd):
 	# print("Type recieved: "+str(type(firstd)))
 	assert(type(firstd) is list),"splittemp did not recieve type list (but maybe string)"
 	
-	datefile,b = checkfolder(firstd,lastd)
+	# Only 1 argument needed, firstd not lastd
+	datefile,b = checkfolder(firstd)
 	# First Date String
 	fds = '-'.join(firstd)
 	print(firstd,fds,datefile,b)
