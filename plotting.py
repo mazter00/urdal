@@ -629,15 +629,18 @@ def main():
 	else:
 		print("Linjer funnet: "+Style.BRIGHT+str(linjer))
 	
-	# 07.05.2018: Leser nå både x og y (tid og value)
-	
+	# Verifiserer lista kun på linjer fra temp.log, antar at resten er riktig (TODO: Flytte denne kodelinja litt opp)
 	reallist = verifylines(lines)
 	
 	# Quickly seperate the list into x and y
 	x = []
 	y = []
 	
-	print("Seperating list")
+	# print("Seperating list")
+	
+	# reallist er den vaska lista
+	
+	# reallist = list
 	
 	for i in range(0,len(reallist)):
 		# print(reallist[i])
@@ -656,7 +659,7 @@ def main():
 		if (m == 0):
 			y.append(reallist[i])
 
-	print("x and y created")
+	# print("x and y created")
 	# print(len(y))
 	# print(len(x))
 	
@@ -673,24 +676,47 @@ def main():
 
 	# Deretter fra time_struck til datetime
 	xlist2 = []
-	# d er kanskje brukt tidligere, setter den til None	
-	d = None
+	
+	sdtba = None
+	
+	nydag = []
 
 	for i in range(0, len(x)):
 		# 09.05.2018: datetime.datetime?
 		# 22.05.2018: *sukk* date?
+		
+		#print(x[i])
+		
 		dt = datetime.fromtimestamp(mktime(x[i]))
+		
+		# String, date time
+		sdt = str(dt)
+		sdt = sdt.split(' ')[0]
+		# print(sdt)
+		
+		if sdtba is None:
+			sdtba = sdt
+			nydag.append([sdt,i])
+		
+		if (sdt != sdtba):
+			sdtba = sdt
+			nydag.append([sdt,i])
+				
 		xlist2.append(dt)
 		# print("dt: "+str(dt)+" i: "+str(i))
 
 		
 	# Selve plotte-kommandoen
 
-	print("matplotlib is now plotting, waiting...")
+	print(nydag)
+	# exit("Sjekk nydag")
+
+
+	print("matplotlib is now plotting, please wait...")
 
 	plt.grid(True)
 	# plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
-	plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
+	plt.plot(xlist2,y,'k.',linewidth=2, markersize=1)
 
 	# Finne en sensible min og max for å vise i matplotlib ETTER plot
 	# (Egentlig bare minimum)
@@ -701,6 +727,8 @@ def main():
 		print("Setting own limit on y-axis, lower, to 20")
 		plt.gca().set_ylim(bottom=20)
 
+	# plt.axvspan()
+	
 	# For x-aksen til å vise time:minutt
 	myFmt = mdates.DateFormatter('%H:%M')
 	plt.gca().xaxis.set_major_formatter(myFmt)
