@@ -730,13 +730,26 @@ def main():
 	# plt.axvspan()
 	
 	# For x-aksen til å vise time:minutt
-	myFmt = mdates.DateFormatter('%H:%M')
-	plt.gca().xaxis.set_major_formatter(myFmt)
+	# Kilde: https://matplotlib.org/gallery/text_labels_and_annotations/date.html
+	days  = mdates.DayLocator(interval=1)
+	hours = mdates.HourLocator(byhour=12)
+	
+	myFmtD = mdates.DateFormatter('%d.%m.%Y')
+	myFmtH = mdates.DateFormatter('%H:%M')
+	
+	# plt.gca().xaxis.set_major_formatter(myFmt)
+	
+	plt.gca().xaxis.set_major_formatter(myFmtD)
+	plt.gca().xaxis.set_minor_formatter(myFmtH)
+	
+	# 30.05.2018, det er en *locator*
+	plt.gca().xaxis.set_major_locator(days)
+	plt.gca().xaxis.set_minor_locator(hours)
 
 	plt.ylabel('Temperatur')
 
 	# 22.05.2018: Men nå kan jeg ikke "datetime.datetime." ?
-	dato = datetime.now().strftime('%d.%m.%Y')
+	dato = datetime.now().strftime('%d.%m.%y')
 	print("Dato: "+str(dato))
 	
 	ttxt = "Siste "
@@ -746,13 +759,18 @@ def main():
 	# --- Legend eller Annontation ---
 
 	plt.text(0,0,"Dagens høyeste temperatur",color='red',fontsize=30)
-
+	
+	plt.gcf().autofmt_xdate()
+	
 	# Sjekke og gjennomgå x-labels for erstatting av 00:00 til dato.
 	# 09.05.2018: Useful for senere, sjekke midnatt, rekord, minimum
 	locs, labs = plt.xticks()
 	print("Locs: "+str(locs))
 	print(labs)
-
+	
+	# mdates er importert
+	print("len of labs: "+str(labs))
+	
 	# TODO: Navngi hvis en automatisert request ble mottatt
 	plt.savefig("temp/urdal/temp.png")
 
