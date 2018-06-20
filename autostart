@@ -1,0 +1,7 @@
+@lxpanel --profile LXDE-pi
+@pcmanfm --desktop --profile LXDE-pi
+@xscreensaver -no-splash
+@point-rpi
+@lxterminal --working-directory=/home/pi/Desktop --command ./cdbin.sh
+# @sudo /usr/bin/python /home/pi/pyscript/sread.py
+@lxterminal --working-directory=/home/pi/Desktop --command ./findip.sh

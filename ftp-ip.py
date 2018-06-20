@@ -22,4 +22,4 @@ ftp.cwd('public_html')
 filepath = "/home/pi/Desktop/interface.txt"
 filnavn  = "interface.txt"
 
-ftp.storbinary('STOR '+filnavn, open(filepath, "rb"), 1024)
+ftp.storlines('STOR '+filnavn, open(filepath, "rb"))
