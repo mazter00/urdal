@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.014 19.06.2018 Creates folder where pictues will be stored for ftp-uoload
 v0.013 22.05.2018 Now generates graphs at requested range in hours without hickup
 V0.012 15.05.2018 Error output (verifylines) looks good, even calculates correct lines removed and shows correct error
 v0.011 14.05.2018 16:38 It now plots again! (four+ days). Problem with y minimum; it's wrong
@@ -377,7 +378,7 @@ def main():
 		
 		os.system("sudo aptitude install libatlas-base-dev")
 		os.system("sudo apt install python3-pip")
-		os.system("sudo pip3 install --upgrade matplotlib")
+		os.system("sudo pip3 install --upgrade matplotlib -v")
 		# os.system("pip3 install matplotlib")
 
 	# 08.05.2018: For "jet" colormap
@@ -770,6 +771,17 @@ def main():
 	
 	# mdates er importert
 	print("len of labs: "+str(labs))
+	
+	# Sjekke om folderen finnes
+	
+	if (os.path.exists("temp")) is False:
+		os.makedirs("temp")
+		print("Folder temp created")
+		
+	if (os.path.exists("temp/urdal")) is False:
+		os.makedirs("temp/urdal")
+		print("Folder temp/urdal created")
+	
 	
 	# TODO: Navngi hvis en automatisert request ble mottatt
 	plt.savefig("temp/urdal/temp.png")

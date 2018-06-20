@@ -122,12 +122,13 @@ while True:
 		
 	j = ">"
 	# 3 = Temp, 16 = Outtemp, 6 = NED/OPP
-	if ((sl != 3) and (sl != 16) and (sl != 6)): 
-		for i in s:
-			j = j+" "+i.decode('utf-8')
-			# print(j)
-		print(j)
-		print(sl)
+	# 19.06.2018: Etter reinstall, kommentert ut
+	# if ((sl != 3) and (sl != 16) and (sl != 6)): 
+	#	for i in s:
+	#		j = j+" "+i.decode('utf-8')
+	#		# print(j)
+	#	print(j)
+	#	print(sl)
 		
 	# Se etter "outtemp"
 	if blokking is True:
@@ -150,12 +151,13 @@ while True:
 				# blocked = str(out1)+" "+str(out2)
 	
 	# debug 
-	if (catchb is False):
-		debug = 1
-		if (debug == 1) and a: 
-			# if "DEBUG Compare" not in str(a,'utf-8'):
-			if b"DEBUG Compare" not in a:
-				print(Style.DIM+"Partial line, Debug i python: "+str(a,'utf-8'))
+	# Tar vekk debugging etter reinstall av OS, 19.06.20128
+	# if (catchb is False):
+	#	debug = 1
+	#	if (debug == 1) and a: 
+	#		# if "DEBUG Compare" not in str(a,'utf-8'):
+	#		if b"DEBUG Compare" not in a:
+	#			print(Style.DIM+"Partial line, Debug i python: "+str(a,'utf-8'))
 
 	
 	# TODO: Lete etter feilmeldinger fra Arduino.
