@@ -39,7 +39,13 @@ with open("devtty.txt") as devfile:
 		exit("Fant ikke åpen  port")
 		
 print(Style.DIM+"Opening port at: "+str(port))
-sport = serial.Serial(port, 115200, timeout=None)
+
+# Hvis feil, prøv å holde ting åpen (20.06.2018)
+try:
+	sport = serial.Serial(port, 115200, timeout=None)
+except:
+	print("Kunne ikke koble til sensor, fatal error")
+	input()
 
 tempfile = open('temp.log', 'a')
 

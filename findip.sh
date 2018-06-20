@@ -8,4 +8,5 @@ curl http://bot.whatismyipaddress.com/ >> interface.txt
 echo -e "\n" >> interface.txt
 cd /home/pi/pyscript
 echo $PWD
+sleep 10
 lxterminal --command python3 ftp-ip.py
