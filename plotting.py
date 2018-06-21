@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Pga teite Python 2
+from __future__ import print_function
+
 '''
 v0.014 19.06.2018 Creates folder where pictues will be stored for ftp-uoload
 v0.013 22.05.2018 Now generates graphs at requested range in hours without hickup
@@ -107,7 +110,7 @@ def verifylines(lines):
 		# print(line2[0])
 		# print(line2[1])
 		
-		# Third check first
+		# Check for third element first
 		
 		if len(line2) > 2: 
 			strline = ' '.join(line2[2:])
@@ -154,10 +157,15 @@ def verifylines(lines):
 		if (vyb is True):
 			d = floaty-floatyba
 			fabs = math.fabs(d)
+			# 20.06.2018: 9 gives loads of error, 9.9 could be better?
+			# Viktig å sette en ok grense her
 			if (fabs >= 9): 
 				errors = errors+1
 				strline = "Diff: "+str(fabs)+" C: "+str(floaty)+" BA: "+str(floatyba)
 				print("["+str(errors)+"] "+"Float distance too high at "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Style.RESET_ALL+str(strline))
+				
+				# 20.06.2018: Selv om distansen var mye, ta backup.
+				floatyba = floaty
 				p = True
 				continue
 			
@@ -213,6 +221,18 @@ def verifylines(lines):
 	print("[Verifylines] Time used: "+Style.BRIGHT+str(round(diff,3))+Style.NORMAL+" seconds")
 
 	return(reallist)
+
+def shortenlines(reallist):
+	x = len(reallist)
+	print("Shorten recieved: ")
+	print("Length: "+str(x))
+	
+	for i in range(0,10):
+		print("i: "+str(i)+" "+str(reallist[i]))
+	
+	
+	# Return False until code is complete
+	return(False)
 			
 def binarys(lines,t,wtdiff,wtdiffs):
 	""" Binary Search """
@@ -324,6 +344,80 @@ def binarys(lines,t,wtdiff,wtdiffs):
 			exit()
 	
 	exit("Fallen off loop?")
+
+def list2xy(reallist):
+	
+	from time import mktime
+	from datetime import datetime
+	
+	# Quickly seperate the list into x and y
+	x = []
+	y = []
+	
+	# print("Seperating list")
+	
+	# reallist er den vaska lista
+	
+	# reallist = list
+	
+	for i in range(0,len(reallist)):
+		# print(reallist[i])
+		
+		j = i+1
+		# 1%2=1=x
+		# 2%2=0=y
+		# 3%2=1=x
+		
+		m = j%2
+		# print(m)
+		
+		# Alltid forvirra over hva som er x og y, partall og oddetall
+		if (m == 1):
+			x.append(reallist[i])
+		if (m == 0):
+			y.append(reallist[i])
+
+	# print("x and y created")
+	# print(len(y))
+	# print(len(x))
+	
+	# Assert the list is correct size
+	assert len(y) == len(x), "Len av ylist and x are not the same"
+	
+		# Deretter fra time_struct til datetime
+	xlist2 = []
+	
+	# String Date Time Backup
+	sdtba = None
+	
+	nydag = []
+
+	for i in range(0, len(x)):
+		# 09.05.2018: datetime.datetime?
+		# 22.05.2018: *sukk* date?
+		
+		#print(x[i])
+		
+		dt = datetime.fromtimestamp(mktime(x[i]))
+		
+		# String, date time
+		sdt = str(dt)
+		sdt = sdt.split(' ')[0]
+		# print(sdt)
+		
+		if sdtba is None:
+			sdtba = sdt
+			nydag.append([sdt,i])
+		
+		if (sdt != sdtba):
+			sdtba = sdt
+			nydag.append([sdt,i])
+				
+		xlist2.append(dt)
+		# print("dt: "+str(dt)+" i: "+str(i))
+
+	
+	return(x,y,xlist2,nydag)
 
 def firstd():
 	with open('temp.log',"r") as f:
@@ -506,7 +600,7 @@ def main():
 		
 		# First Date List
 		fdl = firstdato.split('-')
-		print("fdl: "+Style.BRIGHT+str(fdl),end=' ')
+		print("fdl: "+Style.BRIGHT+str(fdl),end=" ")
 		
 		# Last Date List
 		ldl = lastd.split('-')
@@ -633,40 +727,70 @@ def main():
 	# Verifiserer lista kun på linjer fra temp.log, antar at resten er riktig (TODO: Flytte denne kodelinja litt opp)
 	reallist = verifylines(lines)
 	
-	# Quickly seperate the list into x and y
-	x = []
-	y = []
+	x,y,xlist2,nydag = list2xy(reallist)
 	
-	# print("Seperating list")
+	print("Første element av x og y:")
+	print(x[0])
+	print(y[0])
 	
-	# reallist er den vaska lista
+	# Får lage loop senere, nå tar vi det første segmentet vi finner. Vi tar 60 sek først
 	
-	# reallist = list
+	xlist3 = []
+	y3 = []
+	avg = []
 	
-	for i in range(0,len(reallist)):
-		# print(reallist[i])
-		
-		j = i+1
-		# 1%2=1=x
-		# 2%2=0=y
-		# 3%2=1=x
-		
-		m = j%2
-		# print(m)
-		
-		# Alltid forvirra over hva som er x og y, partall og oddetall
-		if (m == 1):
-			x.append(reallist[i])
-		if (m == 0):
-			y.append(reallist[i])
+	i = 0
+	posi = 0
+	
+	while (i < len(xlist2)):
 
-	# print("x and y created")
-	# print(len(y))
-	# print(len(x))
-	
-	# Assert the list is correct size
-	assert len(y) == len(x), "Len av ylist and x are not the same"
+		d1 = xlist2[posi]
+		
+		# Difference Seconds
+		ds = 0
 
+		i2 = 0
+		avg.append(y[i])
+		
+		while (ds < 60):
+			print(i2)
+			i2 = i2+1
+
+			d2 = xlist2[i]
+			avg.append(y[i])
+			
+			diff = d2-d1
+			print("Diff: "+str(diff))
+
+			ds = diff.total_seconds()
+			print(ds)
+			if (ds == 0.0): exit("0.0 is impossible")
+		
+		posi = i
+		print("Position is: "+str(i))
+		print("Out of secondary loop")
+		gjennomsnittstemp = sum(avg) / len(avg)
+		print(gjennomsnittstemp)
+		y3.append(gjennomsnittstemp)
+		
+	
+	print("Startet med første element, kom helt til (og med) element nummer: "+str(i))
+	print("Avstanden ble til slutt: "+str(diff))
+	print("For moro skyld: x av 1 og x av i er: "+str(y[0])+" "+str(y[i]))
+	
+	print("Len av avg: "+str(len(avg)))
+	
+	print(y3)
+	
+	
+	# exit("sjekk x og y")
+
+	# shortenlist vil finne gjennomsnitt av X sekunder
+	# reallist = shortenlines(reallist)
+	# if (reallist is False): exit("Missing code from shortenlines")
+	
+	
+	
 	# Etter vi har fått y til å bli float, så finner vi nå max
 	
 	ymax = max(y)
@@ -675,36 +799,6 @@ def main():
 	ymin = min(y)
 	assert isinstance(ymin, float), "Min of y is not a float?"
 
-	# Deretter fra time_struck til datetime
-	xlist2 = []
-	
-	sdtba = None
-	
-	nydag = []
-
-	for i in range(0, len(x)):
-		# 09.05.2018: datetime.datetime?
-		# 22.05.2018: *sukk* date?
-		
-		#print(x[i])
-		
-		dt = datetime.fromtimestamp(mktime(x[i]))
-		
-		# String, date time
-		sdt = str(dt)
-		sdt = sdt.split(' ')[0]
-		# print(sdt)
-		
-		if sdtba is None:
-			sdtba = sdt
-			nydag.append([sdt,i])
-		
-		if (sdt != sdtba):
-			sdtba = sdt
-			nydag.append([sdt,i])
-				
-		xlist2.append(dt)
-		# print("dt: "+str(dt)+" i: "+str(i))
 
 		
 	# Selve plotte-kommandoen
@@ -717,7 +811,12 @@ def main():
 
 	plt.grid(True)
 	# plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
-	plt.plot(xlist2,y,'k.',linewidth=2, markersize=1)
+	# plt.plot(xlist2,y,'darkblue', marker='point', linewidth=1, markersize=1)
+	# plt.plot(xlist2,y,'darkblue', linewidth=1, markersize=1)
+	plt.plot(xlist2,y,'darkblue', marker='|', markersize=6, linestyle='None')
+	# plt.plot(xlist2,y,'#01386a.',linewidth=1, markersize=1)
+	
+	
 
 	# Finne en sensible min og max for å vise i matplotlib ETTER plot
 	# (Egentlig bare minimum)
@@ -733,7 +832,7 @@ def main():
 	# For x-aksen til å vise time:minutt
 	# Kilde: https://matplotlib.org/gallery/text_labels_and_annotations/date.html
 	days  = mdates.DayLocator(interval=1)
-	hours = mdates.HourLocator(byhour=12)
+	hours = mdates.HourLocator(byhour=range(2,21,5))
 	
 	myFmtD = mdates.DateFormatter('%d.%m.%Y')
 	myFmtH = mdates.DateFormatter('%H:%M')
@@ -747,7 +846,7 @@ def main():
 	plt.gca().xaxis.set_major_locator(days)
 	plt.gca().xaxis.set_minor_locator(hours)
 
-	plt.ylabel('Temperatur')
+	plt.ylabel('Temperatur i Nidelva')
 
 	# 22.05.2018: Men nå kan jeg ikke "datetime.datetime." ?
 	dato = datetime.now().strftime('%d.%m.%y')
@@ -792,4 +891,10 @@ def main():
 	
 if __name__ == "__main__":
     # execute only if run as a script
+    
+    pyv = sys.version_info[0]
+    # print("Vi kjører Python version: "+str(pyv))
+    
+    assert pyv > int(2),"Krever Python 3, Python 2 er for dårlig"
+
     main()

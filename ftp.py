@@ -20,10 +20,12 @@ ftp.login(user="urdalerx", passwd = passord)
 ftp.cwd('public_html')
 
 # For moro skyld
-listftp = ftp.retrlines('LIST')
+# listftp = ftp.retrlines('LIST')
 
 # Vi vet alltid plassering til filen vår
 filepath = "/home/pi/pyscript/temp/urdal/temp.png"
 filnavn ="temp.png"
 
 ftp.storbinary('STOR '+filnavn, open(filepath, "rb"), 1024)
+
+print("FTP-scriptet ended")
