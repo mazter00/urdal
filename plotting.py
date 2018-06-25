@@ -5,6 +5,8 @@
 from __future__ import print_function
 
 '''
+v0.016 25.06.2018 15:27 Removed function removedecimal. No longer needed, matplotlib will take care of it.
+v0.015 25.06.2018 Added -intervall [num] as an option. Will default to 1500 if not set.
 v0.014 19.06.2018 Creates folder where pictues will be stored for ftp-uoload
 v0.013 22.05.2018 Now generates graphs at requested range in hours without hickup
 V0.012 15.05.2018 Error output (verifylines) looks good, even calculates correct lines removed and shows correct error
@@ -53,27 +55,6 @@ import time
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
 # 08.05.2018: Vi tillar to desimaler fordi matplotlib takler det
 
-def removedecimal():
-	""" Trenger nok denne koden litt til hvis vi skal bytte sensor og den har tre desimaler """
-	temp2 = open("temp2.log",'w')
-	
-	count = 0
-	with open("temp.log") as temp:
-		for line in temp:
-			count = count+1
-			line = line.strip()
-			t = line.split(" ")
-			txt = t[0]
-			t = float(t[1])
-			t = round(t,1)
-			print("Linje: "+str(count)+" T: "+str(t))
-			print("Print: "+str(txt)+" "+str(t))
-			temp2.write(str(txt)+" "+str(t)+"\n")
-	
-	os.rename("temp2.log","temp.log")
-	print("Rename succesful? for desimal-kutt")
-	exit()
-
 def verifylines(lines):
 	""" Verfies by typecasting x and then y at the line before putting in into new list """
 	import math
@@ -82,6 +63,8 @@ def verifylines(lines):
 	tsstart = time.monotonic()
 	
 	lenx = len(lines)
+	# Len X minus 1
+	lenxm1 = lenx-1
 	lenx2 = lenx*2
 	print(Style.BRIGHT+"[VerifyLines]"+Style.NORMAL+" len er: "+str(lenx)+" and therefore "+str(lenx2)+" items")
 	
@@ -99,16 +82,26 @@ def verifylines(lines):
 	errors = 0
 	
 
-	for i in range(0, len(lines)):
+	for i in range(0, lenxm1):
 		
 		# print statement
 		p = False
 		
 		# print("For loop start")
 		line2 = lines[i].split()
+		
+		
 		# print(line2)
 		# print(line2[0])
 		# print(line2[1])
+		
+		# Check for contect (22.06.2018)
+		try:
+			ll2 = len(line2[0])
+		except:
+			print("Empty line 2, 0 @ counter "+str(i))
+			p = False
+			continue
 		
 		# Check for third element first
 		
@@ -132,7 +125,12 @@ def verifylines(lines):
 		except:
 			# print("Typecasting to timestruct failed")
 			# print("i er "+str(i))
+			
+			# 22.06.2018: Feil her?
+			
+			# if (line2[0] is None): print("Massiv feil, 0 av line2 finnes ikke"), continue
 			# print(line2[0])
+			
 			errors = errors+1
 			pre = str("["+str(errors)+"] ["+str(i)+"] ")
 			print(pre+"["+str(errors)+"] "+"Typecasting to timestruct "+str(i)+Style.BRIGHT+Fore.YELLOW+": "+Style.NORMAL+Fore.WHITE+str(line2[0]))
@@ -221,6 +219,59 @@ def verifylines(lines):
 	print("[Verifylines] Time used: "+Style.BRIGHT+str(round(diff,3))+Style.NORMAL+" seconds")
 
 	return(reallist)
+
+# finddiff(xlist2,y,xlist3,y3,anker,intervall)
+def finddiff(xlist2,y,xlist3,y3,anker,intervall):
+	# The list to work with
+	# Starting position
+	# Number of seconds
+	
+	loopc = 0
+	diff = 0
+	snitt = []
+	xlist3 = xlist3
+	y3 = y3
+	intervall = intervall
+	print("Intervall received: "+str(intervall))
+	# exit()
+	
+	# Finne anker-punktet
+	
+	startpunkt = xlist2[anker]
+	
+	while (diff < intervall):
+		loopc = loopc+1
+		
+		value = y[anker+loopc]
+		# print("Value found: "+str(value))
+		
+		# Current tidspunkt
+		cpunkt = xlist2[anker+loopc]
+		
+		d = cpunkt-startpunkt
+		# print("Loopc: "+str(loopc)+" Diff: "+str(d))
+		
+		diff = d.total_seconds()
+		
+		snitt.append(value)
+	
+	lengde = len(snitt)
+	
+	assert lengde>0,"0 i lengde?"
+	
+	snitttemp = sum(snitt) / len(snitt)
+	print(Style.BRIGHT+"Gjennomsnittstemperaturen var: "+str(snitttemp)+" av "+str(lengde)+" målinger")
+	
+	# Legge ting ny liste
+	
+	xlist3.append(startpunkt)
+	y3.append(snitttemp)
+	
+	assert (len(xlist3) == len(y3)),"Xlist3 og y3 er ikke av lik lengde"
+	
+
+	# Return in this format
+	return(loopc,xlist3,y3,snitttemp)
 
 def shortenlines(reallist):
 	x = len(reallist)
@@ -419,8 +470,8 @@ def list2xy(reallist):
 	
 	return(x,y,xlist2,nydag)
 
-def firstd():
-	with open('temp.log',"r") as f:
+def firstd(logfile):
+	with open(logfile,"r") as f:
 		lines = f.readlines()
 		
 	# Get newest date (disregard "now", we are using the file)
@@ -486,6 +537,10 @@ def main():
 	wtdiffs = int(0)
 	
 	firstdato = ""
+	
+	intervall = 0
+	
+	logfile = ""
 
 	if (len(sys.argv) > 1):
 		
@@ -512,16 +567,31 @@ def main():
 			
 			# Wanted time difference
 			wtdiff = int(ali1txt)
+		if ("-intervall" in al):
+			print("-intervall found in al, checking for argument")
+
+			ali = al.index("-intervall")
+			ali1 = ali+1
+			intervall = int(al[ali1])
+			
+			print("ali: "+str(ali))
+			print("ali txt: "+str(intervall))
+			print("Assume this is in seconds")
+			print("Type: "+str(type(intervall)))
+		if ("-log" in al):
+			print("-log found in al, checking for argument")
+
+			ali = al.index("-log")
+			ali1 = ali+1
+			logfile = al[ali1]
+			
+			print("ali: "+str(ali))
+			print("ali txt: "+str(logfile))
+			print("Assume this is the wanted logfile")
 		else:
 			print("End of argv")
 			# Kanskje for "-ftp" ved senere anledning?
 			print("Sys.argv 1: "+str(sys.argv[1]))
-		
-
-	kuttdesimaler = False
-
-	# Set standard showplot
-	if (argplot == False): drawplot = False
 
 	import matplotlib
 	# print(matplotlib.__version__)
@@ -536,18 +606,30 @@ def main():
 	import os
 
 	# Filen som skrives til heter alltid temp.log
+	# Fra og med 25.06.2018 så er ikke dette lenger sant. AM2302 har også sin egen log-file
 
-	fs = os.path.getsize("temp.log")
+	# Set standard showplot
+	if (argplot == False): drawplot = False
+
+	# Sjekker options
+	
+	if (wtdiff == 0):
+		print("Wanted time difference not set; setting it to 24 hours")
+		wtdiff = 24
+		
+	if (intervall == 0):
+		print("Wanted intervall is not set, setting it to 1500 seconds")
+		intervall = 1500
+
+	if (logfile == ""):
+		print("Logfile was empty, using default temp.log")
+		logfile = "temp.log"
+
+	fs = os.path.getsize(logfile)
 	print(Style.BRIGHT+"Bytes: "+Style.NORMAL+str(fs))
 	if (fs == 0): print("0 bytes, exit"), exit(405)
 
 	# fikslinje()
-	
-	if kuttdesimaler is True:
-		removedecimal()
-	else:
-		pass
-		# print("Beholder desimalene")
 
 	# Fordi vi heter Raspberry Pi
 	matplotlib.use('tkagg')
@@ -561,10 +643,6 @@ def main():
 	# Her i main så importerer vi datetime "direkt"
 	from datetime import datetime,timedelta
 	
-	if (wtdiff == 0):
-		print("Wanted time difference not set; setting it to 24 hours")
-		wtdiff = 24
-
 	# Wanted time difference in seconds
 	wtdiffs = int(float(wtdiff)*60*60)
 	print("Wanted time difference in seconds is: "+str(wtdiffs))
@@ -572,16 +650,16 @@ def main():
 
 	# TODO: Unødvendig å åpne denne mange ganger (dette er første gang)
 	# 24.05.2018: lines er ganske universell nedover (tror jeg)
-	with open('temp.log',"r") as f:
+	with open(logfile,"r") as f:
 		lines = f.readlines()
 		
 	# Get newest date (disregard "now", we are using the file)
 
 	# Code for splitting temp.log into individual files
 	
-	firstdato = firstd()
+	firstdato = firstd(logfile)
 	print("firstdato "+str(firstdato))
-	
+		
 	# Prepare t for binarys (se, her bruker vi lines)
 	linje = lines[-1]
 	linje = linje.split()[0]
@@ -727,61 +805,53 @@ def main():
 	# Verifiserer lista kun på linjer fra temp.log, antar at resten er riktig (TODO: Flytte denne kodelinja litt opp)
 	reallist = verifylines(lines)
 	
+	# Denne splitter reallist til henholdvis x og y
 	x,y,xlist2,nydag = list2xy(reallist)
 	
-	print("Første element av x og y:")
-	print(x[0])
-	print(y[0])
-	
-	# Får lage loop senere, nå tar vi det første segmentet vi finner. Vi tar 60 sek først
-	
+	# Våre nye lister, skal erstatte xlist2 og y
 	xlist3 = []
 	y3 = []
-	avg = []
 	
-	i = 0
-	posi = 0
-	
-	while (i < len(xlist2)):
+	# Anker Hansen
+	anker = 0
+	loopc = 0
 
-		d1 = xlist2[posi]
-		
-		# Difference Seconds
-		ds = 0
+	# Def: Ut ifra liste x og y, legg på liste x3 og y3, søk fra pos anker, med sekund intervall
+	# vennligst returner loop counter, current liste for xlist3 og y3, snittet som ble funnet
+	# originale xlist2 og y beholdes fra min side (ønskes ikke returnert)
+	
+	# Ikke sette egen: intervall = 1200
 
-		i2 = 0
-		avg.append(y[i])
-		
-		while (ds < 60):
-			print(i2)
-			i2 = i2+1
+	a2 = 0
+	
+	while (a2 < len(xlist2)):
+		# print("a2 av len: "+str(a2)+" "+str(len(xlist2)))
+		loopc,xlist3,y3,snitt = finddiff(xlist2,y,xlist3,y3,anker,intervall)
 
-			d2 = xlist2[i]
-			avg.append(y[i])
-			
-			diff = d2-d1
-			print("Diff: "+str(diff))
+		assert (loopc > 0),"No loop executed?"
+		assert (snitt > 0),"No average found?"
 
-			ds = diff.total_seconds()
-			print(ds)
-			if (ds == 0.0): exit("0.0 is impossible")
+		# print(Style.BRIGHT+"Snittet denne gang ble: "+str(snitt))
 		
-		posi = i
-		print("Position is: "+str(i))
-		print("Out of secondary loop")
-		gjennomsnittstemp = sum(avg) / len(avg)
-		print(gjennomsnittstemp)
-		y3.append(gjennomsnittstemp)
+		anker = anker+loopc
+		l2 = loopc*2
+		a2 = anker+l2
 		
+		# print("Oppdatert a2: "+str(a2))
+
+
+	print(Style.BRIGHT+str(snitt))
+	print("Sjekk for stats")
 	
-	print("Startet med første element, kom helt til (og med) element nummer: "+str(i))
-	print("Avstanden ble til slutt: "+str(diff))
-	print("For moro skyld: x av 1 og x av i er: "+str(y[0])+" "+str(y[i]))
+	# print(y3)
 	
-	print("Len av avg: "+str(len(avg)))
+	print("Len av xlist3: "+str(len(xlist3)))
+	print("Len av y3: "+str(len(y3)))
 	
-	print(y3)
+	# exit("sjekk x og y")
 	
+	xlist2 = xlist3
+	y = y3
 	
 	# exit("sjekk x og y")
 
@@ -813,7 +883,8 @@ def main():
 	# plt.plot(xlist2,y,'k.',linewidth=1, markersize=1)
 	# plt.plot(xlist2,y,'darkblue', marker='point', linewidth=1, markersize=1)
 	# plt.plot(xlist2,y,'darkblue', linewidth=1, markersize=1)
-	plt.plot(xlist2,y,'darkblue', marker='|', markersize=6, linestyle='None')
+	# OK plt.plot(xlist2,y,'darkblue', marker='.', markersize=2, linestyle='None')
+	plt.plot(xlist2,y,'darkblue', marker='|', linewidth=3)
 	# plt.plot(xlist2,y,'#01386a.',linewidth=1, markersize=1)
 	
 	
@@ -824,15 +895,19 @@ def main():
 	
 	# After input for mr. Jan O
 	if (ymin > 20): 
-		print("Setting own limit on y-axis, lower, to 20")
+		print("Setting own limit on y-axis, minimum, to 20")
 		plt.gca().set_ylim(bottom=20)
+		
+	# if (ymin < 20): 
+	# print("Setting own limit on y-axis, maximum, to 20")
+	#	plt.gca().set_ylim(top=20)
 
 	# plt.axvspan()
 	
 	# For x-aksen til å vise time:minutt
 	# Kilde: https://matplotlib.org/gallery/text_labels_and_annotations/date.html
 	days  = mdates.DayLocator(interval=1)
-	hours = mdates.HourLocator(byhour=range(2,21,5))
+	hours = mdates.HourLocator(byhour=range(2,21,6))
 	
 	myFmtD = mdates.DateFormatter('%d.%m.%Y')
 	myFmtH = mdates.DateFormatter('%H:%M')
@@ -871,6 +946,10 @@ def main():
 	# mdates er importert
 	print("len of labs: "+str(labs))
 	
+	ymin,ymax = plt.ylim()
+	print("ymin: "+str(ymin))
+	print("ymax: "+str(ymax))
+	
 	# Sjekke om folderen finnes
 	
 	if (os.path.exists("temp")) is False:
@@ -884,6 +963,13 @@ def main():
 	
 	# TODO: Navngi hvis en automatisert request ble mottatt
 	plt.savefig("temp/urdal/temp.png")
+	if (wtdiff != 24): 
+		plt.savefig("temp/urdal/temp"+str(wtdiff)+".png")
+		uploadfile = "temp/urdal/temp"+str(wtdiff)+".png"
+	
+	print("Uploading custom png-file to the FTP-server now")
+	os.system("python3 ftp.py -upload uploadfile")
+	print("Done uploading custome file")
 
 	if drawplot is True:
 		print(Fore.GREEN+Style.BRIGHT+"Viser plot")
