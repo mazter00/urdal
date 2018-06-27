@@ -264,8 +264,13 @@ def finddiff(xlist2,y,xlist3,y3,anker,intervall):
 	
 	# Legge ting ny liste
 	
-	xlist3.append(startpunkt)
-	y3.append(snitttemp)
+	if (snitttemp > 0):
+		xlist3.append(startpunkt)
+		y3.append(snitttemp)
+	else:
+		print(Style.BRIGHT+Fore.RED+Back.BLACK+"Error! Negative value found, disregarding it")
+		print("Startpunk?: "+str(startpunkt))
+		# exit()
 	
 	assert (len(xlist3) == len(y3)),"Xlist3 og y3 er ikke av lik lengde"
 	
@@ -596,6 +601,9 @@ def main():
 	import matplotlib
 	# print(matplotlib.__version__)
 	# print(str(matplotlib.__file__))
+	
+	from matplotlib.ticker import MaxNLocator
+	# Kilde: https://stackoverflow.com/questions/34678130/matplotlib-how-can-i-use-maxnlocator-and-specify-a-number-which-has-to-be-in-a
 
 	# 09.05.2018: Tror ikke vi bruker numpy? Sjekk for dette, TODO
 	import numpy as np
@@ -619,7 +627,7 @@ def main():
 		
 	if (intervall == 0):
 		print("Wanted intervall is not set, setting it to 1500 seconds")
-		intervall = 1500
+		intervall = 1200
 
 	if (logfile == ""):
 		print("Logfile was empty, using default temp.log")
@@ -829,7 +837,7 @@ def main():
 		loopc,xlist3,y3,snitt = finddiff(xlist2,y,xlist3,y3,anker,intervall)
 
 		assert (loopc > 0),"No loop executed?"
-		assert (snitt > 0),"No average found?"
+		assert (snitt != 0),"No average found?"
 
 		# print(Style.BRIGHT+"Snittet denne gang ble: "+str(snitt))
 		
@@ -920,6 +928,8 @@ def main():
 	# 30.05.2018, det er en *locator*
 	plt.gca().xaxis.set_major_locator(days)
 	plt.gca().xaxis.set_minor_locator(hours)
+	
+	plt.MaxNLocator(nbins=6)
 
 	plt.ylabel('Temperatur i Nidelva')
 
@@ -962,17 +972,24 @@ def main():
 	
 	
 	# TODO: Navngi hvis en automatisert request ble mottatt
-	plt.savefig("temp/urdal/temp.png")
+	
 	if (wtdiff != 24): 
+		print("Custom wtdiff: "+str(wtdiff))
 		plt.savefig("temp/urdal/temp"+str(wtdiff)+".png")
 		uploadfile = "temp/urdal/temp"+str(wtdiff)+".png"
+	else:
+		# Assume standard 24h graph
+		plt.savefig("temp/urdal/temp.png")
+		uploadfile = "temp/urdal/temp.png"
 	
 	print("Uploading custom png-file to the FTP-server now")
-	os.system("python3 ftp.py -upload uploadfile")
+	print(Style.BRIGHT+"Exact filename: "+str(uploadfile))
+	cmd = "python3 ftp.py -upload "+str(uploadfile)
+	os.system(cmd)
 	print("Done uploading custome file")
 
 	if drawplot is True:
-		print(Fore.GREEN+Style.BRIGHT+"Viser plot")
+		print(Fore.YELLOW+Style.BRIGHT+"Viser plot")
 		plt.show()
 	
 if __name__ == "__main__":

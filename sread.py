@@ -49,9 +49,14 @@ except:
 
 tempfile = open('temp.log', 'a')
 
-# ts = timestamp
+# ts = timestamp - brukes for timer-baserte funksjoner. Grapfing, ftp, backup
 tsplotting = 0
-tsftp = 0
+tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp168.png")
+tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp730.png")
+
+print(tsplot168)
+print(tsplot730)
+
 tsautosave = 0
 
 catchb = False
@@ -175,12 +180,10 @@ while True:
 		print(Style.BRIGHT+"Timestamp is over 10 minutes, runs plotting.py")
 		tsplotting = current
 		os.system("python3 ./plotting.py")
+		time.sleep(5)
+		os.system("python3 ./ftp.py")
 	
 	diff2 = current-tsftp
 	
-	if (diff2 >= 900):
-		print(Style.BRIGHT+"Timestamp is over 15 minutes, runs ftp.py")
-		tsftp = current
-		os.system("python3 ./ftp.py")
 
 print("sread.py is sompleted? Re-run it if needed")
