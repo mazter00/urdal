@@ -23,6 +23,7 @@ import serial
 from time import sleep
 import time
 import os
+import sys
 
 # Fargelegging
 from colorama import init
@@ -50,12 +51,33 @@ except:
 tempfile = open('temp.log', 'a')
 
 # ts = timestamp - brukes for timer-baserte funksjoner. Grapfing, ftp, backup
-tsplotting = 0
-tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp168.png")
-tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp730.png")
+# 24, 168, 730, 8765
 
-print(tsplot168)
-print(tsplot730)
+try:
+	tsplot24 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp.png")
+except:
+	tsplot24 = 0
+
+try:
+	tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp168.png")
+except:
+	tsplot168 = 0
+
+try:
+	tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp730.png")
+except:
+	tsplot730 = 0
+
+try:
+	tsplot8765 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp8765.png")
+except:
+	tsplot8765 = 0
+
+# Max diff
+xdiff24   = 600
+xdiff168  = xdiff24*(168/24)
+xdiff730  = xdiff168*(730/168)
+xdiff8765 = xdiff730*(8765/730)
 
 tsautosave = 0
 
@@ -64,6 +86,32 @@ blocked = None
 # Debug Outtemp? True/False
 blokking = False
 
+# Sjekk for om vi vil debugge
+
+if (len(sys.argv) > 1):
+
+	# argv list
+	al = sys.argv[:]
+	del al[0]
+	print(al)
+			
+	if ("-test" in al):
+		print(Style.BRIGHT+Fore.CYAN+"Plot argument found; testing plot-timings")
+		testplot = True
+		del al[0]
+if (testplot):
+	print(tsplot24)
+	print(tsplot168)
+	print(tsplot730)
+	print(tsplot8765)
+	
+	print(xdiff24)
+	print(xdiff168)
+	print(xdiff730)
+	print(xdiff8765)
+	
+	exit("Look at those numbers, yo!")
+	
 while True:
 	# Arduino = 20, Python = .21
 	sleep(0.21)
@@ -173,17 +221,17 @@ while True:
 	
 	# TODO: Lete etter feilmeldinger fra Arduino.
 
-	diff = current-tsplotting
+	
+	diff = current-ts24
 	# print(diff)
 	
 	if (diff >= 600):
 		print(Style.BRIGHT+"Timestamp is over 10 minutes, runs plotting.py")
 		tsplotting = current
 		os.system("python3 ./plotting.py")
-		time.sleep(5)
 		os.system("python3 ./ftp.py")
 	
-	diff2 = current-tsftp
+	# diff2 = current-tsftp
 	
 
 print("sread.py is sompleted? Re-run it if needed")

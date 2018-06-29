@@ -531,6 +531,8 @@ def main():
 		os.system("sudo pip3 install --upgrade matplotlib -v")
 		# os.system("pip3 install matplotlib")
 
+	from matplotlib.dates import MonthLocator, HourLocator, DateFormatter
+	
 	# 08.05.2018: For "jet" colormap
 	# 09.05.2018: Får ikke til colormap, prøver igjen senere
 	# from matplotlib import cm
@@ -644,6 +646,7 @@ def main():
 
 	# 02.05.2018: Alltid importere etter tkagg
 	import matplotlib.pyplot as plt
+	import matplotlib.ticker as ticker
 
 	# --- Kode for merging ---
 	
@@ -696,7 +699,7 @@ def main():
 		if stb != True: exit("Split Temp failed...?")
 		
 		# Make new firstd so this while loop can work
-		firstdato = firstd()
+		firstdato = firstd(logfile)
 		print("While loop, firstdato: "+str(firstdato))
 	else:
 		print(Fore.GREEN+Style.BRIGHT+"temp.log inneholder kun dagens dato :)")
@@ -914,8 +917,41 @@ def main():
 	
 	# For x-aksen til å vise time:minutt
 	# Kilde: https://matplotlib.org/gallery/text_labels_and_annotations/date.html
-	days  = mdates.DayLocator(interval=1)
-	hours = mdates.HourLocator(byhour=range(2,21,6))
+	# Manuell Day Intervall for hver 100. time + 200% -> 150%
+	ivald = int((wtdiff/100)*1.25
+	)
+	if ivald == 0: ivald = 1
+	print(Style.BRIGHT+"Custom day intervall: "+str(ivald))
+	days  = mdates.DayLocator(interval=ivald)
+	# hours = mdates.HourLocator(byhour=range(2,21,6))
+	
+	# Manuell Hour Intervall + 250% -> 200%
+	# 300 timer er for høy for 72 timer
+	ival = int((wtdiff/17)*2.46)
+	print(Style.BRIGHT+"Custom hour intervall: "+str(ival))
+	
+	mh = 1
+	xh = 22
+	if (wtdiff >= 48): 
+		print("Setting new range for hour to show - 48")
+		mh = 1
+		xh = 20
+	if (wtdiff >= 72): 
+		print("Setting new range for hour to show - 72")
+		mh = 3
+		xh = 19
+	if (wtdiff >= 100): 
+		print("Setting new range for hour to show - 100")
+		mh = 3
+		xh = 17
+	if (wtdiff >= 150): 
+		print("Setting new range for hour to show - 150")
+		mh = 4
+		xh = 17
+		
+	hours = mdates.HourLocator(byhour=range(mh,xh), interval=ival)
+	if (wtdiff >= 150): 
+		hours = hours = mdates.HourLocator(byhour=range(mh,xh), interval=ival)
 	
 	myFmtD = mdates.DateFormatter('%d.%m.%Y')
 	myFmtH = mdates.DateFormatter('%H:%M')
@@ -927,9 +963,21 @@ def main():
 	
 	# 30.05.2018, det er en *locator*
 	plt.gca().xaxis.set_major_locator(days)
-	plt.gca().xaxis.set_minor_locator(hours)
 	
-	plt.MaxNLocator(nbins=6)
+	plt.gca().xaxis.set_minor_locator(hours)
+	# plt.gca().xaxis.set_minor_locator(ticker.AutoMinorLocator())
+	
+	if (wtdiff >= 150):
+		# plt.gca().xaxis.set_minor_locator(ticker.NullLocator())
+		plt.gca().xaxis.set_minor_locator(ticker.AutoMinorLocator(2))
+	
+	# fig, ax = plt.subplots()
+	# plt.gca().xaxis.autoscale_view()
+	
+	# 28.06.2018: Virker fortsatt ikke... Det virker?!
+	# 29.06.2018: gcf = figure, gza = axis
+
+	plt.MaxNLocator(5)
 
 	plt.ylabel('Temperatur i Nidelva')
 
@@ -945,6 +993,7 @@ def main():
 
 	plt.text(0,0,"Dagens høyeste temperatur",color='red',fontsize=30)
 	
+	# Brukes på figure!
 	plt.gcf().autofmt_xdate()
 	
 	# Sjekke og gjennomgå x-labels for erstatting av 00:00 til dato.
