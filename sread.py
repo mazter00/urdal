@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.013 06.07.2018 Now uses TP/temp.log as default logfile for TP100 sensor.
+v0.012 04.07.2018 Now auto's for DAY and WEEK automatically. MONTH and YEAR to follow.
 v0.011 23.05.2018 Added more debugging. Enabled by default. Creates a some noise, though
 v0.010 22.05.2018 15:29 Added "blocking" debug, disabled by default. Was supposed to give a list of "blocked" temps...
 v0.009 22.05.2018 Tried to reduce some output
@@ -48,7 +50,13 @@ except:
 	print("Kunne ikke koble til sensor, fatal error")
 	input()
 
-tempfile = open('temp.log', 'a')
+# Check for folder (for sensor)
+
+if not os.path.exists("TP"):
+		os.makedirs("TP")
+		print("FOLDER "+str("TP")+" created!")
+
+tempfile = open('TP/temp.log', 'a')
 
 # ts = timestamp - brukes for timer-baserte funksjoner. Grapfing, ftp, backup
 # 24, 168, 730, 8765
@@ -79,7 +87,14 @@ xdiff168  = xdiff24*(168/24)
 xdiff730  = xdiff168*(730/168)
 xdiff8765 = xdiff730*(8765/730)
 
+print("Plotting intervals:")
+print("24 hour chart: "+str(xdiff24))
+print("168 hour chart: "+str(xdiff168))
+print("730 hour chart: "+str(xdiff730))
+print("8765 hour chart: "+str(xdiff8765))
+
 tsautosave = 0
+testplot = False
 
 catchb = False
 blocked = None
@@ -128,6 +143,7 @@ while True:
 	if b"Temperature" in a:
 		# print("Temperature found in string")
 		b = a.split(b'= ')
+		# print(len(b))
 		bl = len(b)
 		if (bl != 2):
 			print("len of b: "+str(bl))
@@ -141,7 +157,7 @@ while True:
 		try:
 			temp = b[1]
 		except IndexError:
-			# Dette skjer aldri?
+			# Dette skjer nesten aldri?
 			print("IndexError: A er: "+str(a))
 		
 		tempd = temp.decode('utf-8')
@@ -176,8 +192,10 @@ while True:
 		tempfile.flush()
 		# print(type(tempd))
 
-	s = a.split()
-	sl = len(s)
+	# 06.07.2018: Tror ikke vi trenger denne lengre?
+	# s = a.split()
+	# print(s)
+	# sl = len(s)
 		
 	j = ">"
 	# 3 = Temp, 16 = Outtemp, 6 = NED/OPP
@@ -192,7 +210,7 @@ while True:
 	# Se etter "outtemp"
 	if blokking is True:
 		if b"Outtemp" in a:
-			print("Outtemp found in a: "+str(a))
+			# print("Outtemp found in a: "+str(a))
 					
 			c = a.decode('utf-8')
 			c = c.split(' ')
@@ -222,16 +240,24 @@ while True:
 	# TODO: Lete etter feilmeldinger fra Arduino.
 
 	
-	diff = current-ts24
+	diff24   = current-tsplot24
+	diff168  = current-tsplot168
+	diff730  = current-tsplot730
+	diff8765 = current-tsplot8765
 	# print(diff)
 	
-	if (diff >= 600):
-		print(Style.BRIGHT+"Timestamp is over 10 minutes, runs plotting.py")
-		tsplotting = current
+	if (diff24 >= xdiff24):
+		print(Style.BRIGHT+"Timestamp is over 10 minutes, runs plotting.py for DAY")
+		tsplot24 = current
 		os.system("python3 ./plotting.py")
 		os.system("python3 ./ftp.py")
+
+	if (diff168 >= xdiff168):
+		print(Style.BRIGHT+"Timestamp is over X minutes, runs plotting.py for WEEK")
+		tsplot168 = current
+		os.system("python3 ./plotting.py -time 168")
+		os.system("python3 ./ftp.py")
 	
-	# diff2 = current-tsftp
 	
 
 print("sread.py is sompleted? Re-run it if needed")

@@ -203,6 +203,7 @@ from datetime import datetime
 
 # Mine egne funksjoner
 def main():
+	# 04.07.2018: Hvis split.py blir executa, så skjer det egentlig ingenting her
 	from plotting import today
 	from plotting import extractdate
 

@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 '''
+v0.017 06.07.2018 Moved default temp.log for TP100 to location TP/temp.log. Will add for AM2302 later.
 v0.016 25.06.2018 15:27 Removed function removedecimal. No longer needed, matplotlib will take care of it.
 v0.015 25.06.2018 Added -intervall [num] as an option. Will default to 1500 if not set.
 v0.014 19.06.2018 Creates folder where pictues will be stored for ftp-uoload
@@ -633,7 +634,7 @@ def main():
 
 	if (logfile == ""):
 		print("Logfile was empty, using default temp.log")
-		logfile = "temp.log"
+		logfile = "TP/temp.log"
 
 	fs = os.path.getsize(logfile)
 	print(Style.BRIGHT+"Bytes: "+Style.NORMAL+str(fs))
@@ -898,7 +899,27 @@ def main():
 	plt.plot(xlist2,y,'darkblue', marker='|', linewidth=3)
 	# plt.plot(xlist2,y,'#01386a.',linewidth=1, markersize=1)
 	
+	# Rett etter ploit, sjekk for size
+
+	# Kilde/oppskrift: https://stackoverflow.com/questions/332289/how-do-you-change-the-size-of-figures-drawn-with-matplotlib
 	
+	F = plt.gcf()
+	print(F)
+	
+	DPI = F.get_dpi()
+	print("DPI: "+str(DPI))
+	
+	DefaultSize = F.get_size_inches()
+	print("Default size in Inches: "+str(DefaultSize))
+	
+	# 1.75 for lokal visning, 4 for web/ft-opplastning
+	# Brainstorming med Henrik 03.07: 4:3 -> 16:9 = 1.333
+	F.set_size_inches( (DefaultSize[0]*1.333, DefaultSize[1]*1) )
+	Size = F.get_size_inches()
+	print("Size in Inches: "+str(Size))
+	F.savefig("test2.png")
+	
+	print("Sjekk test2.png for ny storleik på bilete")
 
 	# Finne en sensible min og max for å vise i matplotlib ETTER plot
 	# (Egentlig bare minimum)
@@ -918,40 +939,55 @@ def main():
 	# For x-aksen til å vise time:minutt
 	# Kilde: https://matplotlib.org/gallery/text_labels_and_annotations/date.html
 	# Manuell Day Intervall for hver 100. time + 200% -> 150%
-	ivald = int((wtdiff/100)*1.25
-	)
-	if ivald == 0: ivald = 1
-	print(Style.BRIGHT+"Custom day intervall: "+str(ivald))
-	days  = mdates.DayLocator(interval=ivald)
+	# ivald = int((wtdiff/100)*1.25)
 	# hours = mdates.HourLocator(byhour=range(2,21,6))
 	
 	# Manuell Hour Intervall + 250% -> 200%
 	# 300 timer er for høy for 72 timer
-	ival = int((wtdiff/17)*2.46)
+	# ival = int((wtdiff/17)*2.46)
+	
+	# Henrik formel
+	ival = int(wtdiff/8)
+	print("Henriks formel: "+str(ival))
+	
+	# Min formel v2
+	ival = int(2+(wtdiff/20))
+	print("Min formel v2.0: "+str(ival))
+	
 	print(Style.BRIGHT+"Custom hour intervall: "+str(ival))
 	
+	ivald = int(ival/10)
+	if ivald == 0: ivald = 1
+	print(Style.BRIGHT+"Custom day intervall: "+str(ivald))
+	days  = mdates.DayLocator(interval=ivald)
+
+
 	mh = 1
 	xh = 22
 	if (wtdiff >= 48): 
-		print("Setting new range for hour to show - 48")
+		print(Style.BRIGHT+"Setting new range for hour to show - 48 - 1,20")
 		mh = 1
 		xh = 20
 	if (wtdiff >= 72): 
-		print("Setting new range for hour to show - 72")
+		print(Style.BRIGHT+"Setting new range for hour to show - 72 - 3,19")
 		mh = 3
 		xh = 19
-	if (wtdiff >= 100): 
-		print("Setting new range for hour to show - 100")
+	if (wtdiff >= 90): 
+		print(Style.BRIGHT+"Setting new range for hour to show - 90 - 3,17")
 		mh = 3
 		xh = 17
+	if (wtdiff >= 149): 
+		print(Style.BRIGHT+"Setting new range for hour to show - 149 - 5,13")
+		mh = 5
+		xh = 13
 	if (wtdiff >= 150): 
-		print("Setting new range for hour to show - 150")
-		mh = 4
-		xh = 17
+		print(Style.BRIGHT+"Setting new range for hour to show - 150 - 6,14")
+		mh = 6
+		xh = 14
 		
 	hours = mdates.HourLocator(byhour=range(mh,xh), interval=ival)
 	if (wtdiff >= 150): 
-		hours = hours = mdates.HourLocator(byhour=range(mh,xh), interval=ival)
+		hours = mdates.HourLocator(byhour=range(mh,xh), interval=ival)
 	
 	myFmtD = mdates.DateFormatter('%d.%m.%Y')
 	myFmtH = mdates.DateFormatter('%H:%M')
@@ -967,9 +1003,11 @@ def main():
 	plt.gca().xaxis.set_minor_locator(hours)
 	# plt.gca().xaxis.set_minor_locator(ticker.AutoMinorLocator())
 	
-	if (wtdiff >= 150):
-		# plt.gca().xaxis.set_minor_locator(ticker.NullLocator())
-		plt.gca().xaxis.set_minor_locator(ticker.AutoMinorLocator(2))
+	if (wtdiff >= 730): plt.gca().xaxis.set_minor_locator(ticker.NullLocator())
+	
+	# if (wtdiff >= 730):
+	#	print(Style.BRIGHT+"Setting own AutoMinorLocator = 2")
+	#	plt.gca().xaxis.set_minor_locator(ticker.AutoMinorLocator(2))
 	
 	# fig, ax = plt.subplots()
 	# plt.gca().xaxis.autoscale_view()
@@ -977,17 +1015,32 @@ def main():
 	# 28.06.2018: Virker fortsatt ikke... Det virker?!
 	# 29.06.2018: gcf = figure, gza = axis
 
-	plt.MaxNLocator(5)
-
-	plt.ylabel('Temperatur i Nidelva')
+	# plt.ylabel('Temperatur i Nidelva')
 
 	# 22.05.2018: Men nå kan jeg ikke "datetime.datetime." ?
 	dato = datetime.now().strftime('%d.%m.%y')
 	print("Dato: "+str(dato))
 	
+	# 24 = 24
+	# 168 = Uke
+	# 730 = Måned
+	# 8765 = år
+	
 	ttxt = "Siste "
-	ttxt = ttxt+str(wtdiff)+" timer"
-	plt.title(dato+" ("+str(ttxt)+")")
+	if (wtdiff == 24):
+		ttxt = ttxt+"døgn"
+	elif (wtdiff == 168):
+		ttxt = ttxt+"uke"
+	elif (wtdiff == 730):
+		ttxt = ttxt+"måned"
+	elif (wtdiff == 8765):
+		ttxt = ttxt+"år"
+	else: 
+		ttxt = ttxt+str(wtdiff)+" timer"
+		plt.title(str(ttxt))
+	
+	# plt.title(dato+" ("+str(ttxt)+")")
+	
 
 	# --- Legend eller Annontation ---
 
