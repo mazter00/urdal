@@ -56,7 +56,7 @@ import time
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
 # 08.05.2018: Vi tillar to desimaler fordi matplotlib takler det
 
-def verifylines(lines):
+def verifylines(lines,sensor):
 	""" Verfies by typecasting x and then y at the line before putting in into new list """
 	import math
 	
@@ -96,7 +96,7 @@ def verifylines(lines):
 		# print(line2[0])
 		# print(line2[1])
 		
-		# Check for contect (22.06.2018)
+		# Check for context (22.06.2018)
 		try:
 			ll2 = len(line2[0])
 		except:
@@ -104,18 +104,20 @@ def verifylines(lines):
 			p = False
 			continue
 		
-		# Check for third element first
-		
-		if len(line2) > 2: 
-			strline = ' '.join(line2[2:])
-			errors = errors+1
-			pre = str("["+str(errors)+"] ["+str(i)+"] ")
-			print(pre+"Third element was present"+Style.BRIGHT+Fore.YELLOW+": "+Style.DIM+Fore.RESET+str(strline))
-			p = True
-			continue
-			
-			# print("Setting other flags to False")
-			vzb = True
+		# Check for third element first, only for TP
+		if (sensor == "TP"):
+			if len(line2) > 2: 
+				strline = ' '.join(line2[2:])
+				errors = errors+1
+				pre = str("["+str(errors)+"] ["+str(i)+"] ")
+				print(pre+"Third element was present"+Style.BRIGHT+Fore.YELLOW+": "+Style.DIM+Fore.RESET+str(strline))
+				p = True
+				continue
+				
+				# print("Setting other flags to False")
+				vzb = True
+			else:
+				vzb = False
 		else:
 			vzb = False
 
@@ -476,25 +478,23 @@ def list2xy(reallist):
 	
 	return(x,y,xlist2,nydag)
 
-def firstd(logfile):
-	with open(logfile,"r") as f:
-		lines = f.readlines()
-		
-	# Get newest date (disregard "now", we are using the file)
-
-	# Code for splitting temp.log into individual files
+# 10.07.2018: New name, same fucntion, now does first and last date.
+def getdate(lines):
 	
 	first = lines[0]
 	first = first.split()[0]
 	
 	# Should be something like "2018-05-10T00:00:00.561624"
 	
-	print(first)
-	print(len(first))
+	# print("first: "+str(first))
+	print("len of first (should be 26): "+str(len(first)))
 	
 	if len(first) != 26:
 		# Noise in first line of temp.log, let's remove it and re-write temp.log
 		print(Style.BRIGHT+Fore.RED+"[Error] Noise found in line 1 "+Fore.WHITE+str(first))
+		print(first)
+		
+		exit("Missing code in function getdate")
 		
 		with open("temp.log","w") as fixfile:
 			fixedlines = lines[1:]
@@ -511,7 +511,22 @@ def firstd(logfile):
 	
 	firstd = first.split('T')[0]
 	print("firstd "+str(firstd))
-	return(firstd)
+	
+	# Get lastdate
+	
+	lastd = lines[-1].split('T')[0]
+	print("lastd: "+str(lastd))
+	
+	if (firstd == lastd): 
+		dateb = True
+		print(Style.BRIGHT+Fore.GREEN+"Same date, no splitting needed")
+	else: 
+		dateb = False
+		print(Style.BRIGHT+Fore.RED+"DIFFERENT date, splitting NEEDED")
+	
+	print("[GetDate] dateb is: "+str(dateb))
+	
+	return(firstd,lastd,dateb)
 
 def main():
 	# Alt som er i main kjøres, IKKE ved import
@@ -549,6 +564,7 @@ def main():
 	intervall = 0
 	
 	logfile = ""
+	sensor = ""
 
 	if (len(sys.argv) > 1):
 		
@@ -561,7 +577,7 @@ def main():
 			print(Style.BRIGHT+Fore.CYAN+"Plot argument found; will show plot at the end")
 			drawplot = True
 			argplot = True
-			del al[0]
+			# del al[0]
 		if ("-time" in al):
 			print("-time found in al, checking for argument")
 			
@@ -596,6 +612,20 @@ def main():
 			print("ali: "+str(ali))
 			print("ali txt: "+str(logfile))
 			print("Assume this is the wanted logfile")
+		if ("-sensor" in al):
+			print("-sensor found in al, checking for argument")
+
+			ali = al.index("-sensor")
+			ali1 = ali+1
+			sensor = al[ali1]
+			
+			print("ali: "+str(ali))
+			print("ali txt: "+str(sensor))
+			print("^ Assume this is the wanted sensor ^")
+			# Since we know the sensor, we also know the logfile
+			logfile = sensor+"/temp.log"
+			assert sensor == "TP" or sensor == "AM","Wrong sensor type given"
+
 		else:
 			print("End of argv")
 			# Kanskje for "-ftp" ved senere anledning?
@@ -629,12 +659,15 @@ def main():
 		wtdiff = 24
 		
 	if (intervall == 0):
-		print("Wanted intervall is not set, setting it to 1500 seconds")
+		print("Wanted intervall is not set, setting it to 1200 seconds")
 		intervall = 1200
+		
+	if ((sensor == "") and (logfile == "")):
+		print("No sensor given AND logfile given, assumes TP100 as sensor")
+		sensor = "TP"
+		logfile = sensor+"/temp.log"
 
-	if (logfile == ""):
-		print("Logfile was empty, using default temp.log")
-		logfile = "TP/temp.log"
+	print("After checking for default, logfile is now: "+str(logfile))
 
 	fs = os.path.getsize(logfile)
 	print(Style.BRIGHT+"Bytes: "+Style.NORMAL+str(fs))
@@ -662,48 +695,63 @@ def main():
 
 	# TODO: Unødvendig å åpne denne mange ganger (dette er første gang)
 	# 24.05.2018: lines er ganske universell nedover (tror jeg)
-	with open(logfile,"r") as f:
-		lines = f.readlines()
-		
-	# Get newest date (disregard "now", we are using the file)
-
-	# Code for splitting temp.log into individual files
+	print("Converting "+str(logfile)+" to variable lines...")
+	print("Sensor is: "+str(sensor))
 	
-	firstdato = firstd(logfile)
-	print("firstdato "+str(firstdato))
-		
-	# Prepare t for binarys (se, her bruker vi lines)
-	linje = lines[-1]
-	linje = linje.split()[0]
-	t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
-	lastd = linje.split('T')[0]
+	assert sensor in logfile,"Sensor and logfile doesn't agree"
 	
 	# Egne funksjoner, 25.05.2018: Trenger kanskje kun splittemp?
 	# from split import today,extractdate,checkfolder,splittemp
 	from split import checkfolder,splittemp
 	from merge import merge
+
+	with open(logfile,"r") as f:
+		lines = f.readlines()
+		
+	# Code for splitting temp.log into individual files
+	# First check the need for splitting log into folders/files
 	
-	# print("firstd vs lastd: "+str(firstd)+" "+str(lastd))
-	while (firstdato != lastd):
-		# Split Temp Boolean
-		print(Fore.CYAN+"temp.log contains different dates, split "+Style.BRIGHT+str(firstdato)+Style.NORMAL+" from the log")
-		
-		# First Date List
-		fdl = firstdato.split('-')
-		print("fdl: "+Style.BRIGHT+str(fdl),end=" ")
-		
-		# Last Date List
-		ldl = lastd.split('-')
-		print("ldl: "+Style.BRIGHT+str(ldl))
-		
-		stb = splittemp(fdl,ldl)
-		if stb != True: exit("Split Temp failed...?")
-		
-		# Make new firstd so this while loop can work
-		firstdato = firstd(logfile)
-		print("While loop, firstdato: "+str(firstdato))
-	else:
-		print(Fore.GREEN+Style.BRIGHT+"temp.log inneholder kun dagens dato :)")
+	# TODO 10.07.2018: Se igjennom def firstd
+	
+	# dateb = date boolean
+	firstdate,lastdate,dateb = getdate(lines)
+	
+	print(firstdate)
+	print(lastdate)
+	print(dateb)
+	
+	if (dateb == True): print("Same, no splitting needed")
+	elif (dateb == False): 
+		print("Different, splitting needed")
+
+		while (firstdate != lastdate):
+			print("[WhileLoop] Firstdate vs lastdate: "+str(firstdate)+" "+str(lastdate))
+			
+			# Split Temp Boolean
+			print(Style.BRIGHT+Fore.CYAN+"temp.log contains different dates, split "+Style.BRIGHT+str(firstdate)+Style.NORMAL+" from the log")
+			
+			# First Date List
+			fdl = firstdate.split('-')
+			print("fdl: "+Style.BRIGHT+str(fdl),end=" ")
+			
+			# Last Date List
+			ldl = lastdate.split('-')
+			print("ldl: "+Style.BRIGHT+str(ldl))
+			
+			stb = splittemp(fdl,ldl,sensor)
+			if stb == False: 
+				print("Split Temp failed...? Break loop")
+				break
+			
+			# Make new "lines"
+			with open(logfile,"r") as f:
+				lines = f.readlines()
+
+			# Make new firstdate so this while loop can work
+			firstdate = getdate(lines)
+			print("While loop, firstdato: "+str(firstdate))
+		else:
+			print(Fore.GREEN+Style.BRIGHT+"temp.log inneholder kun dagens dato :)")
 		
 	# exit("Arbitrary exit loop after cleaning all dates except today")
 
@@ -712,6 +760,12 @@ def main():
 	
 	# Beregne hvor mange og hvilke log-filer vi må merge...
 	
+	# Prepare t for binarys (se, her bruker vi lines, siste linje)
+	linje = lines[-1]
+	linje = linje.split()[0]
+	t = datetime.strptime(linje,"%Y-%m-%dT%H:%M:%S.%f")
+
+
 	# t er fra siste linje i temp.log
 	print("t: "+str(t))
 	
@@ -772,18 +826,20 @@ def main():
 	
 	for i in ldm: 
 		print(i)
-		ldm2.append(checkfolder(i)[0])
+		ldm2.append(checkfolder(i,sensor)[0])
 			
 	print("ldm2: "+str(ldm2))
 	
-	m = merge(ldm2)
+	m = merge(ldm2,sensor)
 	if (m is False): print("Merge is false, cannot continue..."), exit()
+	
+	mfile = sensor+"/merged.log"
 	
 	print("Len of ldm2 (if > 0, then merge was needed?): "+str(len(ldm2)))
 	if (len(ldm2) > 0):
-		with open("merged.log",'r') as f:
+		with open(mfile,'r') as f:
 			lines = f.readlines()
-		print(Style.BRIGHT+Fore.CYAN+"Using merged.log instead of temp.log")
+		print(Style.BRIGHT+Fore.CYAN+"Using "+str(sensor)+"/merged.log instead of temp.log")
 	
 	
 	# "lines" kommer fra temp.log
@@ -793,8 +849,9 @@ def main():
 	if bsb is False:
 		# Her finner vi ut at vi må merge
 		print("BSL: "+str(bsl))
-		# merger = 
-		exit("[Main] Binary Search failed")
+		print(Fore.RED+"[Main] Binary Search failed")
+		print("Sleeping for 11 seconds...")
+		time.sleep(11)
 	else:
 		print("Binary Search Succeded, Line Number Returned: "+str(bsl))
 		
@@ -815,7 +872,7 @@ def main():
 		print("Linjer funnet: "+Style.BRIGHT+str(linjer))
 	
 	# Verifiserer lista kun på linjer fra temp.log, antar at resten er riktig (TODO: Flytte denne kodelinja litt opp)
-	reallist = verifylines(lines)
+	reallist = verifylines(lines,sensor)
 	
 	# Denne splitter reallist til henholdvis x og y
 	x,y,xlist2,nydag = list2xy(reallist)
@@ -962,7 +1019,7 @@ def main():
 	days  = mdates.DayLocator(interval=ivald)
 
 
-	mh = 1
+	mh = 2
 	xh = 22
 	if (wtdiff >= 48): 
 		print(Style.BRIGHT+"Setting new range for hour to show - 48 - 1,20")

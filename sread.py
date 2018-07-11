@@ -56,7 +56,7 @@ if not os.path.exists("TP"):
 		os.makedirs("TP")
 		print("FOLDER "+str("TP")+" created!")
 
-tempfile = open('TP/temp.log', 'a')
+tempfile = open("TP/temp.log", 'a')
 
 # ts = timestamp - brukes for timer-baserte funksjoner. Grapfing, ftp, backup
 # 24, 168, 730, 8765
@@ -178,7 +178,7 @@ while True:
 		if (savediff >= 3600):
 			tempfile.close()
 			print(Style.BRIGHT+"Autosaved temp.log")
-			tempfile = open('temp.log', 'a')
+			tempfile = open("TP/temp.log", 'a')
 			tsautosave = current
 			
 		if (tryb is True):
@@ -249,15 +249,19 @@ while True:
 	if (diff24 >= xdiff24):
 		print(Style.BRIGHT+"Timestamp is over 10 minutes, runs plotting.py for DAY")
 		tsplot24 = current
+		sleep(10)
 		os.system("python3 ./plotting.py")
 		os.system("python3 ./ftp.py")
 
 	if (diff168 >= xdiff168):
 		print(Style.BRIGHT+"Timestamp is over X minutes, runs plotting.py for WEEK")
 		tsplot168 = current
+		sleep(20)
 		os.system("python3 ./plotting.py -time 168")
 		os.system("python3 ./ftp.py")
 	
 	
 
 print("sread.py is sompleted? Re-run it if needed")
+s = input('--> ')
+print(s)

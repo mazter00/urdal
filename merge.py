@@ -14,13 +14,20 @@ init()
 from colorama import Fore, Back, Style
 init(autoreset=True)
 
-def merge(ldm2):
+def merge(ldm2,sensor):
 	# List for dates to merge
 	print("Hello, this is merge from merge.py")
-	print("Argument recieved: "+str(ldm2))
+	print("Argument recieved: "+str(ldm2)+" and sensor: "+str(sensor))
 	print("We want to merge this number of files into one: "+str(len(ldm2)))
 	
-	with open("merged.log",'w') as merged:
+	mergedfile = sensor+"/merged.log"
+	
+	# Current temporary tempurate file
+	cttf = sensor+"/temp.log"
+	print("CTTF: "+str(cttf))
+	
+	print("mergedfile: "+str(mergedfile))
+	with open(mergedfile,'w') as merged:
 		
 		for fil in ldm2:
 			print("fil: "+str(fil))
@@ -32,14 +39,12 @@ def merge(ldm2):
 			merged.write(txt)
 		
 		print("Outside for loop, merging last file, temp.log")
-		txt = open("temp.log",'r').read()
+		txt = open(cttf,'r').read()
+		print("len av latest txt which should be temp.log from sensor: "+str(sensor)+" and len "+str(len(txt)))
 		merged.write(txt)
 			
-	print("Merging ended, check merged.log, even with temp.log added on")
-			
-		
+	print("Merging ended, check merged.log, even with temp.log tacked on")
 	
-	# Return False until code is complete
 	return(True)
 
 
