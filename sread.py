@@ -62,22 +62,22 @@ tempfile = open("TP/temp.log", 'a')
 # 24, 168, 730, 8765
 
 try:
-	tsplot24 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp.png")
+	tsplot24 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp.png")
 except:
 	tsplot24 = 0
 
 try:
-	tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp168.png")
+	tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp168.png")
 except:
 	tsplot168 = 0
 
 try:
-	tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp730.png")
+	tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp730.png")
 except:
 	tsplot730 = 0
 
 try:
-	tsplot8765 = os.path.getmtime("/home/pi/pyscript/temp/urdal/temp8765.png")
+	tsplot8765 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp8765.png")
 except:
 	tsplot8765 = 0
 
@@ -177,7 +177,8 @@ while True:
 		savediff = current-tsautosave
 		if (savediff >= 3600):
 			tempfile.close()
-			print(Style.BRIGHT+"Autosaved temp.log")
+			print(Style.BRIGHT+"Autosaved temp.log for sensor TP")
+			sleep(1)
 			tempfile = open("TP/temp.log", 'a')
 			tsautosave = current
 			

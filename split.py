@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.005 12.07.2018 List and datestring has more firmly defined
 v0.004 06.07.2018 15:30 Function splittings now works with AM-sensor
 v0.003 06.07.2018 checkfolder now asks for sensor
 v0.002 24.05.2018 Now sucessfully splits a certain string in temp.log to its own file. Also removes noise!
@@ -33,6 +34,8 @@ def version():
 
 from datetime import datetime
 
+# 12.07.2018
+# Tror ikke denne heller brukes noe sted 
 def today():
 	d = datetime.now().isoformat()
 	e = d.find('T')
@@ -260,16 +263,17 @@ def checkfolder(firstdate,sensor):
 
 # Sometimes, it is more fun to write things twice
 
-def splittemp(firstdate,lastdate,sensor):
+def splittemp(firstdatel,lastdatel,sensor):
 	# print("Type recieved: "+str(type(firstdate)))
-	assert(type(firstdate) is list),"splittemp did not recieve type list (but maybe string)"
+	assert(type(firstdatel) is list),"splittemp did not recieve type list (but maybe string)"
 	
 	# Only 1 argument needed, firstdate not lastdate
-	datefile,b = checkfolder(firstdate,sensor)
+	datefile,b = checkfolder(firstdatel,sensor)
 	
 	# First Date String
-	fds = '-'.join(firstdate)
-	print(firstdate,fds,datefile,b)
+	fds = '-'.join(firstdatel)
+	print("[SplitTemp]: Firstdatel - fds - datefile - b")
+	print(firstdatel,fds,datefile,b)
 	
 	logfile = sensor+"/temp.log"
 	result = splittings(datefile,fds,logfile)

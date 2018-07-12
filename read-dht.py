@@ -47,6 +47,7 @@ while True:
 	
 	s = d+" "+str(temperature)+" "+str(humidity)+"%"
 	tempfile.write(s+"\n")
+	tempfile.flush()
 	print(s)
 	
 	# 25.06.2018: Det virker med 0.01, men det er veldig unødvendig
@@ -55,7 +56,9 @@ while True:
 	savediff = current-tsautosave
 	if (savediff >= 3600):
 		tempfile.close()
-		print(Style.BRIGHT+"Autosaved temp.log")
+		sleep(1)
+		print(Style.BRIGHT+"Autosaved temp.log for sensor AM")
+		sleep(1)
 		tempfile = open("/home/pi/pyscript/AM/temp.log", 'a')
 		tsautosave = current
 	
