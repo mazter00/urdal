@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 '''
+v0.018 12.07.2018 Now saves sensor within filename.
 v0.017 06.07.2018 Moved default temp.log for TP100 to location TP/temp.log. Will add for AM2302 later.
 v0.016 25.06.2018 15:27 Removed function removedecimal. No longer needed, matplotlib will take care of it.
 v0.015 25.06.2018 Added -intervall [num] as an option. Will default to 1500 if not set.
@@ -56,7 +57,7 @@ import time
 # 13.04.2018: Vi kutter ikke lenger i desimanlene fordi Arduino sender kun en desimal
 # 08.05.2018: Vi tillar to desimaler fordi matplotlib takler det
 
-def verifylines(lines,sensor):
+def verifylines(lines,sensor,plottype):
 	""" Verfies by typecasting x and then y at the line before putting in into new list """
 	import math
 	
@@ -145,8 +146,14 @@ def verifylines(lines,sensor):
 			# print("x passed, tester y")
 			# print(vx)
 			
+			if (plottype == "luft"):
+				prefloat = line2[2]
+				prefloat = prefloat[:-1]
+				# print(prefloat)
+			else:
+				prefloat = line2[1]
 			try:
-				floaty = float(line2[1])
+				floaty = float(prefloat)
 				# if (floaty > 1000): print("line2: "+str(line2)), exit()
 				vyb = True
 			except:
@@ -186,7 +193,7 @@ def verifylines(lines,sensor):
 			reallist.append(timy)
 			
 			# print("vy "+str(vy))
-			reallist.append(floaty)
+			reallist.append(floaty) 
 		else:
 			if (p == False):
 				errors = errors+1
@@ -487,7 +494,7 @@ def getdate(lines):
 	# Should be something like "2018-05-10T00:00:00.561624"
 	
 	# print("first: "+str(first))
-	print("len of first (should be 26): "+str(len(first)))
+	print("[GetDate] len of first (should be 26): "+str(len(first)))
 	
 	if len(first) != 26:
 		# Noise in first line of temp.log, let's remove it and re-write temp.log
@@ -519,10 +526,10 @@ def getdate(lines):
 	
 	if (firstd == lastd): 
 		dateb = True
-		print(Style.BRIGHT+Fore.GREEN+"Same date, no splitting needed")
+		# print(Style.BRIGHT+Fore.GREEN+"Same date, no splitting needed")
 	else: 
 		dateb = False
-		print(Style.BRIGHT+Fore.RED+"DIFFERENT date, splitting NEEDED")
+		# print(Style.BRIGHT+Fore.RED+"DIFFERENT date, splitting NEEDED")
 	
 	print("[GetDate] dateb is: "+str(dateb))
 	
@@ -565,6 +572,7 @@ def main():
 	
 	logfile = ""
 	sensor = ""
+	plottype = ""
 
 	if (len(sys.argv) > 1):
 		
@@ -625,7 +633,10 @@ def main():
 			# Since we know the sensor, we also know the logfile
 			logfile = sensor+"/temp.log"
 			assert sensor == "TP" or sensor == "AM","Wrong sensor type given"
-
+		if ("-luft" in al):
+			sensor = "AM"
+			logfile = sensor+"/temp.log"
+			plottype = "luft"
 		else:
 			print("End of argv")
 			# Kanskje for "-ftp" ved senere anledning?
@@ -666,14 +677,23 @@ def main():
 		print("No sensor given AND logfile given, assumes TP100 as sensor")
 		sensor = "TP"
 		logfile = sensor+"/temp.log"
+		
+	if (plottype == "luft"):
+		print("We are going to plot {} from sensor {} and from logfile {}".format(Style.BRIGHT+"humidity"+Style.NORMAL,sensor,logfile))
+		time.sleep(2)
+	else:
+		plottype = "temp"
+		print(Style.DIM+"Standard plotting where we assume we want to graph temperature...")
 
 	print("After checking for default, logfile is now: "+str(logfile))
 
 	fs = os.path.getsize(logfile)
-	print(Style.BRIGHT+"Bytes: "+Style.NORMAL+str(fs))
+	sof = Style.BRIGHT+"Size of logfile: "+Style.NORMAL
+	lf = Style.BRIGHT+"Logfile: "+Style.NORMAL
+	print("{}{} {}{}".format(sof,fs,lf,logfile))
 	if (fs == 0): print("0 bytes, exit"), exit(405)
 
-	# fikslinje()
+	time.sleep(2)
 
 	# Fordi vi heter Raspberry Pi
 	matplotlib.use('tkagg')
@@ -720,38 +740,32 @@ def main():
 	print(lastdate)
 	print(dateb)
 	
-	if (dateb == True): print("Same, no splitting needed")
-	elif (dateb == False): 
-		print("Different, splitting needed")
+	while (dateb is False):
+		print("[WhileLoop] Firstdate vs lastdate: "+str(firstdate)+" "+str(lastdate))
+		
+		print(Style.BRIGHT+Fore.CYAN+"temp.log contains different dates, split "+Style.BRIGHT+str(firstdate)+Style.NORMAL+" from the log - "+str(logfile))
+		
+		firstdatel = firstdate.split("-")
+		lastdatel = lastdate.split("-")
+		# Split Temp Boolean
+		stb = splittemp(firstdatel,lastdatel,sensor)
+		if stb == False: 
+			print("Split Temp failed...? Break loop")
+			break
+		
+		# Make new "lines"
+		with open(logfile,"r") as f:
+			lines = f.readlines()
 
-		while (firstdate != lastdate):
-			print("[WhileLoop] Firstdate vs lastdate: "+str(firstdate)+" "+str(lastdate))
-			
-			# Split Temp Boolean
-			print(Style.BRIGHT+Fore.CYAN+"temp.log contains different dates, split "+Style.BRIGHT+str(firstdate)+Style.NORMAL+" from the log")
-			
-			# First Date List
-			fdl = firstdate.split('-')
-			print("fdl: "+Style.BRIGHT+str(fdl),end=" ")
-			
-			# Last Date List
-			ldl = lastdate.split('-')
-			print("ldl: "+Style.BRIGHT+str(ldl))
-			
-			stb = splittemp(fdl,ldl,sensor)
-			if stb == False: 
-				print("Split Temp failed...? Break loop")
-				break
-			
-			# Make new "lines"
-			with open(logfile,"r") as f:
-				lines = f.readlines()
+		# Make new firstdate so this while loop can work
+		# End of while loop, get new data
+		firstdate,lastdate,dateb = getdate(lines)
+		
+		print(firstdate)
+		print(lastdate)
+		print(dateb)
+		print("End of WhileLoop! If dateb is stille False, then it will continue...")
 
-			# Make new firstdate so this while loop can work
-			firstdate = getdate(lines)
-			print("While loop, firstdato: "+str(firstdate))
-		else:
-			print(Fore.GREEN+Style.BRIGHT+"temp.log inneholder kun dagens dato :)")
 		
 	# exit("Arbitrary exit loop after cleaning all dates except today")
 
@@ -813,10 +827,6 @@ def main():
 	
 	ldm.append(tms)
 
-
-	
-	
-	
 	print("Her har vi en range? (sjekk også for last-to-current-day)")
 	print(ldm)
 	
@@ -840,6 +850,7 @@ def main():
 		with open(mfile,'r') as f:
 			lines = f.readlines()
 		print(Style.BRIGHT+Fore.CYAN+"Using "+str(sensor)+"/merged.log instead of temp.log")
+		time.sleep(3)
 	
 	
 	# "lines" kommer fra temp.log
@@ -849,11 +860,15 @@ def main():
 	if bsb is False:
 		# Her finner vi ut at vi må merge
 		print("BSL: "+str(bsl))
-		print(Fore.RED+"[Main] Binary Search failed")
-		print("Sleeping for 11 seconds...")
-		time.sleep(11)
+		print(Style.BRIGHT+Fore.RED+"[Main] Binary Search failed, not enough data found")
+		print("As of now, we are not forcing anything, so we are letting it continue")
+		print("Sleeping for 5 seconds...")
+		time.sleep(5)
+		# 12.07.2018: TODO, hvis man ber om ett år, og ikke har det
+		# så vil feilen oppdages HER
+		# sånn at vi kan legge til "fake data" for å force ett år
 	else:
-		print("Binary Search Succeded, Line Number Returned: "+str(bsl))
+		print(Style.BRIGHT+"Binary Search Succeded, Line Number Returned: "+Style.NORMAL+str(bsl))
 		
 	# Loop for å lage liste out av en selected range fra temp.log ([lines])
 	print("Lines exists, len: "+str(len(lines)))
@@ -861,18 +876,18 @@ def main():
 	lines = lines[bsl:]
 	print("New Lines, len: "+str(len(lines)))
 	
+	print("Current plottype: "+str(plottype))
+	
+	time.sleep(3)
 
 	# --- KODE FOR PLOTTINGz --- 
 	
-	linjer = len(lines)
-	if (linjer == 0): 
-		print("Ingen linjer i temp.log, exit! Linjer er: "+str(linjer))
-		exit()
-	else:
-		print("Linjer funnet: "+Style.BRIGHT+str(linjer))
+	# 13.07.2018: Var en en sjekk her for å se om lines > 0, men *tror* det er blitt sjekket tidligere
 	
 	# Verifiserer lista kun på linjer fra temp.log, antar at resten er riktig (TODO: Flytte denne kodelinja litt opp)
-	reallist = verifylines(lines,sensor)
+
+	assert plottype is not None,"Plottype missing, temp or luft?"
+	reallist = verifylines(lines,sensor,plottype)
 	
 	# Denne splitter reallist til henholdvis x og y
 	x,y,xlist2,nydag = list2xy(reallist)
@@ -953,7 +968,14 @@ def main():
 	# plt.plot(xlist2,y,'darkblue', marker='point', linewidth=1, markersize=1)
 	# plt.plot(xlist2,y,'darkblue', linewidth=1, markersize=1)
 	# OK plt.plot(xlist2,y,'darkblue', marker='.', markersize=2, linestyle='None')
-	plt.plot(xlist2,y,'darkblue', marker='|', linewidth=3)
+
+	farge = "darkblue"
+	if (sensor == "AM"):
+		farge = "red"
+	if (plottype == "luft"):
+		farge = "green"
+
+	plt.plot(xlist2,y,farge, marker='|', linewidth=3)
 	# plt.plot(xlist2,y,'#01386a.',linewidth=1, markersize=1)
 	
 	# Rett etter ploit, sjekk for size
@@ -1134,12 +1156,12 @@ def main():
 	
 	if (wtdiff != 24): 
 		print("Custom wtdiff: "+str(wtdiff))
-		plt.savefig("temp/urdal/temp"+str(wtdiff)+".png")
-		uploadfile = "temp/urdal/temp"+str(wtdiff)+".png"
+		plt.savefig( "temp/urdal/"+sensor+"-"+plottype+"-"+str(wtdiff)+".png")
+		uploadfile = "temp/urdal/"+sensor+"-"+plottype+"-"+str(wtdiff)+".png"
 	else:
 		# Assume standard 24h graph
-		plt.savefig("temp/urdal/temp.png")
-		uploadfile = "temp/urdal/temp.png"
+		plt.savefig( "temp/urdal/"+sensor+"-"+plottype+".png")
+		uploadfile = "temp/urdal/"+sensor+"-"+plottype+".png"
 	
 	print("Uploading custom png-file to the FTP-server now")
 	print(Style.BRIGHT+"Exact filename: "+str(uploadfile))

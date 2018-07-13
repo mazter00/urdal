@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+v0.014 13.07.2018 Now with nicely formatted text to show intervalls at the start-up
 v0.013 06.07.2018 Now uses TP/temp.log as default logfile for TP100 sensor.
 v0.012 04.07.2018 Now auto's for DAY and WEEK automatically. MONTH and YEAR to follow.
 v0.011 23.05.2018 Added more debugging. Enabled by default. Creates a some noise, though
@@ -41,7 +42,7 @@ with open("devtty.txt") as devfile:
 	if port is None:
 		exit("Fant ikke åpen  port")
 		
-print(Style.DIM+"Opening port at: "+str(port))
+print(Fore.GREEN+"Opening port at: "+str(port))
 
 # Hvis feil, prøv å holde ting åpen (20.06.2018)
 try:
@@ -67,17 +68,17 @@ except:
 	tsplot24 = 0
 
 try:
-	tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp168.png")
+	tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp-168.png")
 except:
 	tsplot168 = 0
 
 try:
-	tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp730.png")
+	tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp-730.png")
 except:
 	tsplot730 = 0
 
 try:
-	tsplot8765 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp8765.png")
+	tsplot8765 = os.path.getmtime("/home/pi/pyscript/temp/urdal/TP-temp-8765.png")
 except:
 	tsplot8765 = 0
 
@@ -87,11 +88,58 @@ xdiff168  = xdiff24*(168/24)
 xdiff730  = xdiff168*(730/168)
 xdiff8765 = xdiff730*(8765/730)
 
-print("Plotting intervals:")
-print("24 hour chart: "+str(xdiff24))
-print("168 hour chart: "+str(xdiff168))
-print("730 hour chart: "+str(xdiff730))
-print("8765 hour chart: "+str(xdiff8765))
+# To minutes
+
+xdiff24m   = int(  xdiff24/60)
+xdiff168m  = int( xdiff168/60)
+xdiff730m  = int( xdiff730/60)
+xdiff8765m = int(xdiff8765/60)
+
+# To hours
+
+xdiff24h   =   round(xdiff24m/60,2)
+xdiff168h  =  round(xdiff168m/60,2)
+xdiff730h  =  round(xdiff730m/60,2)
+xdiff8765h = round(xdiff8765m/60,2)
+
+# To days
+
+xdiff24d   = str(  round(xdiff24h/24,3))
+xdiff168d  = str( round(xdiff168h/24,3))
+xdiff730d  = str( round(xdiff730h/24,3))
+xdiff8765d = str(round(xdiff8765h/24,3))
+
+# Numbers to strings for nicely formatted printout
+
+xdiff24m   =   str(xdiff24m)
+xdiff168m  =  str(xdiff168m)
+xdiff730m  =  str(xdiff730m)
+xdiff8765m = str(xdiff8765m)
+
+xdiff24h   =   str(xdiff24h)
+xdiff168h  =  str(xdiff168h)
+xdiff730h  =  str(xdiff730h)
+xdiff8765h = str(xdiff8765h)
+
+# Printout
+
+hc = " hours chart: "
+so = " seconds or "
+mo = " minutes or "
+ho = " hours or "
+
+h  = [Style.BRIGHT+"24"+Style.NORMAL,Style.BRIGHT+"168"+Style.NORMAL,Style.BRIGHT+"730"+Style.NORMAL,Style.BRIGHT+"7654"+Style.NORMAL]
+h2 = [Style.BRIGHT+str(int(xdiff24))+Style.NORMAL,Style.BRIGHT+str(int(xdiff168))+Style.NORMAL,Style.BRIGHT+str(int(xdiff730))+Style.NORMAL,Style.BRIGHT+str(int(xdiff8765))+Style.NORMAL]
+h3 = [Style.BRIGHT+xdiff24m+Style.NORMAL,Style.BRIGHT+xdiff168m+Style.NORMAL,Style.BRIGHT+xdiff730m+Style.NORMAL,Style.BRIGHT+xdiff8765m+Style.NORMAL]
+h4 = [Style.BRIGHT+xdiff24h+Style.NORMAL,Style.BRIGHT+xdiff168h+Style.NORMAL,Style.BRIGHT+xdiff730h+Style.NORMAL,Style.BRIGHT+xdiff8765h+Style.NORMAL]
+h5 = [Style.BRIGHT+xdiff24d+Style.NORMAL,Style.BRIGHT+xdiff168d+Style.NORMAL,Style.BRIGHT+xdiff730d+Style.NORMAL,Style.BRIGHT+xdiff8765d+Style.NORMAL]
+
+print("{:>13}{}{:>15}{}{:>13}{}{:>14}{}{:>14} days".format(h[0],hc,h2[0],so,h3[0],mo,h4[0],ho,h5[0]))
+print("{:>13}{}{:>15}{}{:>13}{}{:>14}{}{:>14} days".format(h[1],hc,h2[1],so,h3[1],mo,h4[1],ho,h5[1]))
+print("{:>13}{}{:>15}{}{:>13}{}{:>14}{}{:>14} days".format(h[2],hc,h2[2],so,h3[2],mo,h4[2],ho,h5[2]))
+print("{:>13}{}{:>15}{}{:>13}{}{:>14}{}{:>14} days".format(h[3],hc,h2[3],so,h3[3],mo,h4[3],ho,h5[3]))
+# print("...sleeping for 15 seconds...")
+# sleep(15)
 
 tsautosave = 0
 testplot = False
@@ -114,12 +162,15 @@ if (len(sys.argv) > 1):
 		print(Style.BRIGHT+Fore.CYAN+"Plot argument found; testing plot-timings")
 		testplot = True
 		del al[0]
+
 if (testplot):
 	print(tsplot24)
 	print(tsplot168)
 	print(tsplot730)
 	print(tsplot8765)
 	
+	print("-----")
+
 	print(xdiff24)
 	print(xdiff168)
 	print(xdiff730)
@@ -259,6 +310,20 @@ while True:
 		tsplot168 = current
 		sleep(20)
 		os.system("python3 ./plotting.py -time 168")
+		os.system("python3 ./ftp.py")
+
+	if (diff730 >= xdiff730):
+		print(Style.BRIGHT+"Timestamp is over X minutes, runs plotting.py for MONTH")
+		tsplot730 = current
+		sleep(20)
+		os.system("python3 ./plotting.py -time 730")
+		os.system("python3 ./ftp.py")
+
+	if (diff8765 >= xdiff8765):
+		print(Style.BRIGHT+"Timestamp is over X minutes, runs plotting.py for YEAR")
+		tsplot8765 = current
+		sleep(20)
+		os.system("python3 ./plotting.py -time 8765")
 		os.system("python3 ./ftp.py")
 	
 	
