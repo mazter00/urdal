@@ -50,7 +50,7 @@ if (len(sys.argv) > 1):
 			uploadfile = al[ali1]
 		except:
 			print(Style.BRIGHT+Fore.RED+"Please add the filename to be uploaded. Exiting...")
-			exit()
+			# return(False)
 
 		print("ali: "+str(ali))
 		print("ali txt: "+str(ali1txt))
@@ -66,8 +66,8 @@ if (len(sys.argv) > 1):
 # Vi vet alltid plassering til filen vår
 if (uploadfile == ""):
 	print("Uploadfile is empty; Using default file (temp.png)")
-	filepath = "/home/pi/pyscript/temp/urdal/temp.png"
-	filnavn = "temp.png"
+	filepath = "/home/pi/pyscript/temp/urdal/TP-temp.png"
+	filnavn = "TP-temp.png"
 else:
 	if ("png" in uploadfile): 
 		filepath = uploadfile

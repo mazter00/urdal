@@ -35,30 +35,23 @@ pin = 4
 
 tsautosave = 0
 
+from plotstats import plotstats
+# plotstats printer ut, men returnerer xdiff24/168/730/8765
+
+xdiff24,xdiff168,xdiff730,xdiff8765,tsplot24,tsplot168,tsplot730,tsplot8765,boolean = plotstats("AM")
+print(xdiff24,xdiff168,xdiff730,xdiff8765,tsplot24,tsplot168,tsplot730,tsplot8765,boolean)
+
+# Luft.fuktighet
+
+xdiff24,xdiff168,xdiff730,xdiff8765,tsplot24l,tsplot168l,tsplot730l,tsplot8765l,boolean = plotstats("AM-luft")
+print("Variabler for LUFTFUKTIGHET:")
+print(xdiff24,xdiff168,xdiff730,xdiff8765,tsplot24l,tsplot168l,tsplot730l,tsplot8765l,boolean)
+
+
+sleep(15)
+
 # ts = timestamp - brukes for timer-baserte funksjoner. Grapfing, ftp, backup
 # 24, 168, 730, 8765
-
-try:
-	tsplot24 = os.path.getmtime("/home/pi/pyscript/temp/urdal/AM-temp.png")
-except:
-	tsplot24 = 0
-
-try:
-	tsplot168 = os.path.getmtime("/home/pi/pyscript/temp/urdal/AM-temp-168.png")
-except:
-	tsplot168 = 0
-
-try:
-	tsplot730 = os.path.getmtime("/home/pi/pyscript/temp/urdal/AM-temp-730.png")
-except:
-	tsplot730 = 0
-
-try:
-	tsplot8765 = os.path.getmtime("/home/pi/pyscript/temp/urdal/AM-temp-8765.png")
-except:
-	tsplot8765 = 0
-
-# Set #2 for luftfuktighet
 
 try:
 	tsplot24l = os.path.getmtime("/home/pi/pyscript/temp/urdal/AM-luft.png")

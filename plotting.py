@@ -498,12 +498,13 @@ def getdate(lines):
 	
 	if len(first) != 26:
 		# Noise in first line of temp.log, let's remove it and re-write temp.log
-		print(Style.BRIGHT+Fore.RED+"[Error] Noise found in line 1 "+Fore.WHITE+str(first))
+		print(Style.BRIGHT+Fore.RED+"[Error] Noise (not 26) found in line 1 "+Fore.WHITE+str(first))
+		print("Instead we found this: "+str(len(first)))
 		print(first)
 		
-		exit("Missing code in function getdate")
+		print("Missing code in function getdate")
 		
-		with open("temp.log","w") as fixfile:
+		with open(logfile,"w") as fixfile:
 			fixedlines = lines[1:]
 			fixedstr = ''.join(fixedlines)
 			fixfile.write(fixedstr)
@@ -1167,7 +1168,7 @@ def main():
 	print(Style.BRIGHT+"Exact filename: "+str(uploadfile))
 	cmd = "python3 ftp.py -upload "+str(uploadfile)
 	os.system(cmd)
-	print("Done uploading custome file")
+	print("Done uploading custom file")
 
 	if drawplot is True:
 		print(Fore.YELLOW+Style.BRIGHT+"Viser plot")
