@@ -218,11 +218,16 @@ def verifylines(lines,sensor,plottype):
 	print("Which means we removed this number of lines: "+Style.BRIGHT+str(l2))
 
 	lrl = len(reallist)
-	errorrate = round((diffe/lrl)*100,4)
-	erp = str(errorrate)+"%"
+	if (lrl != 0):
+		errorrate = round((diffe/lrl)*100,4)
+		erp = str(errorrate)+"%"
+	else:
+		print(Style.BRIGHT+"Division by zero!")
+		errorrate = 100
+		erp = str(errorrate)+"%"
+	
 	print("The errorrate is: "+Fore.RED+Style.BRIGHT+str(erp))
 
-	
 	print("Verifylines "+Fore.GREEN+"ended")
 	tsend = time.monotonic()
 	diff = tsend-tsstart
@@ -890,6 +895,11 @@ def main():
 	assert plottype is not None,"Plottype missing, temp or luft?"
 	reallist = verifylines(lines,sensor,plottype)
 	
+	if len(reallist) == 0:
+		print("We no longer have a list to work with, 100% errorrate?")
+		print("Unable to create a plot, the script is now exiting!")
+		return("Not able to make a plot")
+	
 	# Denne splitter reallist til henholdvis x og y
 	x,y,xlist2,nydag = list2xy(reallist)
 	
@@ -908,6 +918,7 @@ def main():
 	# Ikke sette egen: intervall = 1200
 
 	a2 = 0
+	snitt = 0
 	
 	while (a2 < len(xlist2)):
 		# print("a2 av len: "+str(a2)+" "+str(len(xlist2)))
@@ -925,6 +936,9 @@ def main():
 		# print("Oppdatert a2: "+str(a2))
 
 
+	print("Sjekk for snitt")
+	print("a2, len, snitt: "+str(a2)+" -- "+str(len(xlist2))+"-- "+str(snitt))
+	
 	print(Style.BRIGHT+str(snitt))
 	print("Sjekk for stats")
 	
