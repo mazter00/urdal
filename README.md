@@ -15,11 +15,16 @@ A user can any time make a graph for any sensor for any time duration (in hours)
 
 Any combination is allowed:
 
-python3 plotting.py -time 25
-python3 plotting.py -time 25 -plot
-python3 plotting.py -time 25 -plot -intervall 3600
-python3 plotting.py -time 25 -plot -intervall 3600 -log "TP|AM"
-python3 plotting.py -time 25 -plot -intervall 3600 -sensor "TP|AM"
-python3 plotting.py -time 25 -plot -intervall 3600 -luft (Will assume sensor and log to be "AM")
+* python3 plotting.py -time 25
+
+* python3 plotting.py -time 25 -plot
+
+* python3 plotting.py -time 25 -plot -intervall 3600
+
+* python3 plotting.py -time 25 -plot -intervall 3600 -log "TP|AM"
+
+* python3 plotting.py -time 25 -plot -intervall 3600 -sensor "TP|AM"
+
+* python3 plotting.py -time 25 -plot -intervall 3600 -luft (Will assume sensor and log to be "AM")
 
 
