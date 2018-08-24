@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 '''
+v0.019 02.08.2018 In case of only Null-readings, reconize that no plot can be made 
 v0.018 12.07.2018 Now saves sensor within filename.
 v0.017 06.07.2018 Moved default temp.log for TP100 to location TP/temp.log. Will add for AM2302 later.
 v0.016 25.06.2018 15:27 Removed function removedecimal. No longer needed, matplotlib will take care of it.
@@ -257,7 +258,12 @@ def finddiff(xlist2,y,xlist3,y3,anker,intervall):
 	while (diff < intervall):
 		loopc = loopc+1
 		
-		value = y[anker+loopc]
+		try:
+			value = y[anker+loopc]
+		except:
+			print(Style.BRIGHT+"IndexError! anker, loopc, diff, intervall: "+str(anker)+" - "+str(loopc)+" - "+str(diff)+" - "+str(intervall)+" < ")
+			time.sleep(10)
+			
 		# print("Value found: "+str(value))
 		
 		# Current tidspunkt
@@ -1181,12 +1187,16 @@ def main():
 	print("Uploading custom png-file to the FTP-server now")
 	print(Style.BRIGHT+"Exact filename: "+str(uploadfile))
 	cmd = "python3 ftp.py -upload "+str(uploadfile)
+	time.sleep(5)
 	os.system(cmd)
 	print("Done uploading custom file")
+	
 
 	if drawplot is True:
 		print(Fore.YELLOW+Style.BRIGHT+"Viser plot")
 		plt.show()
+	else:
+		time.sleep(5)
 	
 if __name__ == "__main__":
     # execute only if run as a script

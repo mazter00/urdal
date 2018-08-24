@@ -8,6 +8,7 @@ v0.002 26.06.2018 Able to upload custom files. Either by pure number, or from pl
 from ftplib import FTP
 import os
 import sys
+import time
 
 # Fargelegging
 from colorama import init
@@ -16,14 +17,24 @@ from colorama import Fore, Back, Style
 init(autoreset=True)
 
 # ftp = FTP("files.000webhost.com")
-ftp = FTP("cpanel64.proisp.no")
+# ftp = FTP("cpanel64.proisp.no")
+ftp = FTP("ftp.urdalservices.com")
+
+# 15.08.2018: Lagde ny FTP-konto i cPanel hos proisp kun for dette
+# Brukernavn: temp@urdalservices.com
+# FTP-server: ftp.urdalservices.com
+# FTP-port: 21
 
 # Laste inn passordet til FTPen
-with open("ftpassord.txt") as txtfile:
+# with open("ftpassord.txt") as txtfile:
+#	passord = txtfile.read()
+
+with open("ftpassord2.txt") as txtfile:
 	passord = txtfile.read()
 
 # ftp.login(user="rivertemp", passwd = passord)
-ftp.login(user="urdalerx", passwd = passord)
+# ftp.login(user="urdalerx", passwd = passord)
+ftp.login(user="temp@urdalservices.com", passwd = passord)
 
 # Vi vet hva som er på serveren
 
@@ -31,6 +42,7 @@ ftp.cwd('public_html')
 
 uploadfile=""
 filepath=""
+al = None
 
 if (len(sys.argv) > 1):
 	
@@ -65,7 +77,7 @@ if (len(sys.argv) > 1):
 
 # Vi vet alltid plassering til filen vår
 if (uploadfile == ""):
-	print("Uploadfile is empty; Using default file (temp.png)")
+	print("Uploadfile is empty; Using default file (TP-temp.png)")
 	filepath = "/home/pi/pyscript/temp/urdal/TP-temp.png"
 	filnavn = "TP-temp.png"
 else:
@@ -92,7 +104,9 @@ else:
 	filnavn = uploadfileshort
 	print("filnavn ifra uploadfile: "+Style.BRIGHT+str(filnavn))
 	
-
+print("Sleeping for 10 seconds in fear of a automatic ban")
+time.sleep(10)
 ftp.storbinary('STOR '+filnavn, open(filepath, "rb"), 1024)
 
-print("FTP-scriptet ended")
+if al is not None:
+	print("FTP-scriptet ended with arguments of: "+str(al))

@@ -10,6 +10,14 @@ init()
 from colorama import Fore, Back, Style
 init(autoreset=True)
 
+def printdiff(x):
+	""" Print diff from supplied X """
+	
+	now = time()
+	diff = now-x
+	print(now,diff)
+	return(diff)
+
 def plotstats(sensor):
 	""" Return ready-formatted printout """
 	print("plotstats recieved: "+str(sensor))
@@ -45,7 +53,8 @@ def plotstats(sensor):
 	# sleep(1)
 
 	# Max diff
-	xdiff24   = 600
+	# Trøbbel med proisp.no, 10-dobler timeren (og dermed alle timere)
+	xdiff24   = 6000
 	xdiff168  = xdiff24*(168/24)
 	xdiff730  = xdiff168*(730/168)
 	xdiff8765 = xdiff730*(8765/730)
@@ -107,9 +116,17 @@ def plotstats(sensor):
 
 def main():
 	print("plotstats.py main function")
-	en,to,tre,fire,a,b,c,d,B = plotstats("AM-luft")
-	print(a,b,c,d)
-	print(B)
+	sensor = ""
+	sensors = ["TP","AM","AM-luft"]
+	for i in range(0,3):
+		sensor = sensors[i]
+		en,to,tre,fire,a,b,c,d,B = plotstats(sensor)
+		print(a,b,c,d)
+		# print(B)
+		print("Printdiff a: "+str(printdiff(a)))
+		print("Printdiff b: "+str(printdiff(b)))
+		print("Printdiff c: "+str(printdiff(c)))
+		print("Printdiff d: "+str(printdiff(d)))
 
 import sys
 if __name__ == "__main__":
