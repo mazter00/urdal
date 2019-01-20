@@ -5,6 +5,8 @@
 from __future__ import print_function
 
 '''
+v0.021 20.01.2019 23:04 Def getdate now requires logfile. Fixes the problem.
+v0.020 20.01.2019 Added if sentence in line 518, short fix.
 v0.019 02.08.2018 In case of only Null-readings, reconize that no plot can be made 
 v0.018 12.07.2018 Now saves sensor within filename.
 v0.017 06.07.2018 Moved default temp.log for TP100 to location TP/temp.log. Will add for AM2302 later.
@@ -497,7 +499,7 @@ def list2xy(reallist):
 	return(x,y,xlist2,nydag)
 
 # 10.07.2018: New name, same fucntion, now does first and last date.
-def getdate(lines):
+def getdate(lines,logfile):
 	
 	first = lines[0]
 	first = first.split()[0]
@@ -507,6 +509,8 @@ def getdate(lines):
 	# print("first: "+str(first))
 	print("[GetDate] len of first (should be 26): "+str(len(first)))
 	
+	time.sleep(1)
+	
 	if len(first) != 26:
 		# Noise in first line of temp.log, let's remove it and re-write temp.log
 		print(Style.BRIGHT+Fore.RED+"[Error] Noise (not 26) found in line 1 "+Fore.WHITE+str(first))
@@ -514,6 +518,11 @@ def getdate(lines):
 		print(first)
 		
 		print("Missing code in function getdate")
+		
+		if (logfile is None):
+			logfile = sensor+"/temp.log"
+			print("Variable logfile was empty, assuming temp.log")
+			print("Variable sensor was: "+sensor)
 		
 		with open(logfile,"w") as fixfile:
 			fixedlines = lines[1:]
@@ -746,7 +755,7 @@ def main():
 	# TODO 10.07.2018: Se igjennom def firstd
 	
 	# dateb = date boolean
-	firstdate,lastdate,dateb = getdate(lines)
+	firstdate,lastdate,dateb = getdate(lines,logfile)
 	
 	print(firstdate)
 	print(lastdate)
@@ -771,7 +780,7 @@ def main():
 
 		# Make new firstdate so this while loop can work
 		# End of while loop, get new data
-		firstdate,lastdate,dateb = getdate(lines)
+		firstdate,lastdate,dateb = getdate(lines,logfile)
 		
 		print(firstdate)
 		print(lastdate)
