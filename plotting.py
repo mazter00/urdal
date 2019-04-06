@@ -356,9 +356,9 @@ def binarys(lines,t,wtdiff,wtdiffs):
 		mergeb = True
 
 	if (mergeb is True):
-		print("We need to merge files to fulfill the range-reqeust. Aborting due to incomplete code")
+		print("We need to merge more files to fulfill the range-reqeust. Currently not enough data (range not enough).")
+		# exit("Need to merge, incomplete code")
 		return(False,mergeb)
-		exit("Need to merge, incomplete code")
 
 	# Alt ok så langt. Enten har temp.log rangen inne, eller så har vi merget filer. TODO: Merge filer ved behov
 
@@ -748,9 +748,11 @@ def main():
 
 	with open(logfile,"r") as f:
 		lines = f.readlines()
+		# print("05.04.2019: Her har vi lines? "+str(len(lines)))
+		# exit()
 		
 	# Code for splitting temp.log into individual files
-	# First check the need for splitting log into folders/files
+	# First check the _need_ for splitting log into folders/files
 	
 	# TODO 10.07.2018: Se igjennom def firstd
 	
@@ -772,6 +774,8 @@ def main():
 		stb = splittemp(firstdatel,lastdatel,sensor)
 		if stb == False: 
 			print("Split Temp failed...? Break loop")
+			# Exiterer istedenfor
+			exit()
 			break
 		
 		# Make new "lines"
@@ -879,15 +883,18 @@ def main():
 	# Binary Search Boolean, Binary Search Line Number Returned
 	bsb,bsl = binarys(lines,t,wtdiff,wtdiffs)
 	if bsb is False:
-		# Her finner vi ut at vi må merge
+		# Her finner vi ut at vi IKKE har nok range og må merge
 		print("BSL: "+str(bsl))
 		print(Style.BRIGHT+Fore.RED+"[Main] Binary Search failed, not enough data found")
 		print("As of now, we are not forcing anything, so we are letting it continue")
-		print("Sleeping for 5 seconds...")
-		time.sleep(5)
+		print("Sleeping for 6 seconds...")
+		time.sleep(6)
 		# 12.07.2018: TODO, hvis man ber om ett år, og ikke har det
 		# så vil feilen oppdages HER
 		# sånn at vi kan legge til "fake data" for å force ett år
+		print("05.04.2019: La oss prøve likevel")
+		bsl = int(0)
+		print("Vi setter bsl manuelt til 0, slik at vi tar alt det var har av datoer!")
 	else:
 		print(Style.BRIGHT+"Binary Search Succeded, Line Number Returned: "+Style.NORMAL+str(bsl))
 		
